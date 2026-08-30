@@ -3,6 +3,11 @@ name: Publish Android APK
 on:
   push:
     branches: [main, master]
+    paths-ignore:
+      - README.md
+      - LICENSE
+      - docs/**
+      - .github/**
 
 permissions:
   contents: write
