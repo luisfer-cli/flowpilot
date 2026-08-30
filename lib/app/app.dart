@@ -1,18 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../features/settings/settings_screen.dart' show themeModeProvider;
+import '../features/settings/settings_screen.dart' show appSettingsProvider;
+import '../l10n/app_localizations.dart';
 import 'providers.dart';
 import 'router.dart';
 import 'theme.dart';
+import '../core/utils/time_utils.dart';
 
 class FlowPilotApp extends ConsumerWidget {
   const FlowPilotApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeModeProvider);
+    final settings = ref.watch(appSettingsProvider);
+    configureTimeFormatting(
+      languageCode: settings.languageCode,
+      dateFormat: settings.dateFormat.name,
+      hourFormat: settings.hourFormat.name,
+      weekStartsMonday: settings.weekStartsMonday,
+    );
     final seed = ref.watch(seedProvider);
 
     final router = AppRouter.router();
@@ -20,16 +27,12 @@ class FlowPilotApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'FlowPilot',
       debugShowCheckedModeBanner: false,
-      locale: const Locale('es'),
+      locale: Locale(settings.languageCode),
       supportedLocales: const [Locale('es'), Locale('en')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      themeMode: themeMode,
+      themeMode: settings.themeMode,
       routerConfig: router,
       builder: (context, child) {
         return seed.when(

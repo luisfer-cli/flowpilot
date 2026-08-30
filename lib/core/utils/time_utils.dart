@@ -1,5 +1,31 @@
 import 'package:intl/intl.dart';
 
+String _formatLocale = 'es';
+String? _datePattern;
+String? _timePattern;
+bool _weekStartsMonday = true;
+
+void configureTimeFormatting({
+  required String languageCode,
+  required String dateFormat,
+  required String hourFormat,
+  required bool weekStartsMonday,
+}) {
+  _formatLocale = languageCode;
+  _datePattern = switch (dateFormat) {
+    'dayMonthYear' => 'dd/MM/yyyy',
+    'monthDayYear' => 'MM/dd/yyyy',
+    _ => null,
+  };
+  _timePattern = switch (hourFormat) {
+    'h12' => 'h:mm a',
+    'h24' => 'HH:mm',
+    _ => languageCode == 'en' ? 'h:mm a' : 'HH:mm',
+  };
+  _weekStartsMonday = weekStartsMonday;
+  Intl.defaultLocale = languageCode;
+}
+
 /// Day key in the format yyyyMMdd (e.g. 20260820). Used for calendar queries.
 int dayKey(DateTime date) {
   return date.year * 10000 + date.month * 100 + date.day;
@@ -19,9 +45,9 @@ DateTime startOfDay(DateTime date) => DateTime(date.year, date.month, date.day);
 DateTime endOfDay(DateTime date) =>
     DateTime(date.year, date.month, date.day, 23, 59, 59, 999);
 
-DateTime startOfWeek(DateTime date, {bool mondayFirst = true}) {
+DateTime startOfWeek(DateTime date, {bool? mondayFirst}) {
   final day = date.weekday;
-  final offset = mondayFirst ? day - 1 : (day % 7);
+  final offset = (mondayFirst ?? _weekStartsMonday) ? day - 1 : (day % 7);
   return startOfDay(date).subtract(Duration(days: offset));
 }
 
@@ -37,8 +63,11 @@ String formatMinutes(int minutes) {
   return '${h}h ${m}m';
 }
 
-String formatTimeOfDay(DateTime dt) => DateFormat.Hm().format(dt);
+String formatTimeOfDay(DateTime dt) =>
+    DateFormat(_timePattern, _formatLocale).format(dt);
 
-String formatDate(DateTime date) => DateFormat('EEE d MMM').format(date);
+String formatDate(DateTime date) =>
+    DateFormat(_datePattern ?? 'EEE d MMM', _formatLocale).format(date);
 
-String formatFullDate(DateTime date) => DateFormat('EEE d MMM y').format(date);
+String formatFullDate(DateTime date) =>
+    DateFormat(_datePattern ?? 'EEE d MMM y', _formatLocale).format(date);

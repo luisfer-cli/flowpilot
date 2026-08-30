@@ -17,6 +17,7 @@ import '../tasks/task_providers.dart';
 import '../tasks/widgets/task_card.dart';
 import '../habits/routines_screen.dart';
 import '../schedules/schedules_screen.dart';
+import '../settings/settings_screen.dart' show appSettingsProvider;
 
 /// Screen showing the calendar: day view (time blocking grid), week agenda
 /// and month view.
@@ -1034,6 +1035,7 @@ class _MonthView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tasksAsync = ref.watch(allTasksProvider);
+    final settings = ref.watch(appSettingsProvider);
 
     return tasksAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -1047,7 +1049,7 @@ class _MonthView extends ConsumerWidget {
         }
         return SingleChildScrollView(
           child: TableCalendar(
-            locale: 'es',
+            locale: settings.languageCode,
             firstDay: DateTime(2020),
             lastDay: DateTime(2035),
             focusedDay: selectedDate,

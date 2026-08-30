@@ -7,6 +7,7 @@ import '../features/pomodoro/pomodoro_screen.dart';
 import '../features/stats/analysis_screen.dart';
 import '../features/tasks/task_edit_screen.dart';
 import '../features/tasks/tasks_screen.dart';
+import '../features/settings/settings_screen.dart';
 import 'home_shell.dart';
 
 class AppRouter {
@@ -16,6 +17,7 @@ class AppRouter {
   static const routines = '/routines';
   static const stats = '/reports';
   static const taskEdit = '/task/edit';
+  static const settings = '/settings';
 
   static GoRouter router() => GoRouter(
     initialLocation: tasks,
@@ -52,6 +54,14 @@ class AppRouter {
           StatefulShellBranch(
             routes: [
               GoRoute(path: stats, builder: (_, _) => const AnalysisScreen()),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: settings,
+                builder: (_, _) => const SettingsScreen(),
+              ),
             ],
           ),
         ],

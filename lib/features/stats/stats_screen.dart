@@ -58,16 +58,19 @@ class _StatsViewState extends ConsumerState<StatsView> {
   @override
   Widget build(BuildContext context) {
     final bounds = _bounds;
+    final categories =
+        ref.watch(globalCategoriesProvider).valueOrNull ?? const <Category>[];
+    final selectedCategoryId = categories.any((c) => c.id == _categoryId)
+        ? _categoryId
+        : null;
     final filter = (
       start: bounds.start,
       end: bounds.end,
-      categoryId: _categoryId,
+      categoryId: selectedCategoryId,
     );
     final report = ref.watch(reportsSnapshotProvider(filter));
-    final categories =
-        ref.watch(globalCategoriesProvider).valueOrNull ?? const <Category>[];
     final selectedCategory = categories
-        .where((category) => category.id == _categoryId)
+        .where((category) => category.id == selectedCategoryId)
         .firstOrNull;
 
     return ListView(
@@ -107,7 +110,7 @@ class _StatsViewState extends ConsumerState<StatsView> {
         ),
         const SizedBox(height: 10),
         DropdownButtonFormField<String?>(
-          initialValue: _categoryId,
+          initialValue: selectedCategoryId,
           decoration: const InputDecoration(
             labelText: 'Categoría del reporte',
             prefixIcon: Icon(Icons.label_outline),

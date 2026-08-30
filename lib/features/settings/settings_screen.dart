@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
@@ -8,41 +9,34 @@ import '../../core/utils/time_utils.dart';
 import '../../core/constants.dart';
 import '../../data/local/database.dart';
 import '../../shared/widgets.dart';
+import '../../l10n/app_localizations.dart';
 import 'settings_service.dart';
 
 final settingsServiceProvider = Provider<SettingsService>(
   (ref) => SettingsService(),
 );
 
-final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>(
-  (ref) => ThemeModeNotifier(ref.watch(settingsServiceProvider)),
-);
+final appSettingsProvider =
+    StateNotifierProvider<AppSettingsNotifier, AppSettings>(
+      (ref) => AppSettingsNotifier(ref.watch(settingsServiceProvider)),
+    );
 
-class ThemeModeNotifier extends StateNotifier<ThemeMode> {
-  ThemeModeNotifier(this._service) : super(ThemeMode.system) {
+class AppSettingsNotifier extends StateNotifier<AppSettings> {
+  AppSettingsNotifier(this._service) : super(const AppSettings()) {
     _load();
   }
 
   final SettingsService _service;
 
   Future<void> _load() async {
-    final mode = await _service.getThemeMode();
-    state = switch (mode) {
-      'light' => ThemeMode.light,
-      'dark' => ThemeMode.dark,
-      _ => ThemeMode.system,
-    };
+    state = await _service.getAppSettings();
   }
 
-  Future<void> set(ThemeMode mode) async {
-    state = mode;
-    await _service.setThemeMode(mode.name);
+  Future<void> update(AppSettings Function(AppSettings) change) async {
+    state = change(state);
+    await _service.setAppSettings(state);
   }
 }
-
-final apiKeyProvider = FutureProvider<String?>(
-  (ref) => ref.watch(settingsServiceProvider).getApiKey(),
-);
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -52,91 +46,135 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  final _apiKeyController = TextEditingController();
-
-  @override
-  void dispose() {
-    _apiKeyController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _saveApiKey() async {
-    await ref
-        .read(settingsServiceProvider)
-        .setApiKey(_apiKeyController.text.trim());
-    ref.invalidate(apiKeyProvider);
-    if (mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Clave guardada')));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final themeMode = ref.watch(themeModeProvider);
-    final apiKey = ref.watch(apiKeyProvider).valueOrNull;
-    if (_apiKeyController.text.isEmpty && apiKey != null) {
-      _apiKeyController.text = apiKey;
-    }
+    final settings = ref.watch(appSettingsProvider);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Ajustes')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          SectionHeader('Apariencia'),
+          SectionHeader(l10n.appearance),
           const SizedBox(height: 6),
           SegmentedButton<ThemeMode>(
-            segments: const [
-              ButtonSegment(value: ThemeMode.system, label: Text('Sistema')),
-              ButtonSegment(value: ThemeMode.light, label: Text('Claro')),
-              ButtonSegment(value: ThemeMode.dark, label: Text('Oscuro')),
+            segments: [
+              ButtonSegment(
+                value: ThemeMode.system,
+                label: Text(l10n.themeSystem),
+              ),
+              ButtonSegment(
+                value: ThemeMode.light,
+                label: Text(l10n.themeLight),
+              ),
+              ButtonSegment(value: ThemeMode.dark, label: Text(l10n.themeDark)),
             ],
-            selected: {themeMode},
-            onSelectionChanged: (s) =>
-                ref.read(themeModeProvider.notifier).set(s.first),
+            selected: {settings.themeMode},
+            onSelectionChanged: (s) => ref
+                .read(appSettingsProvider.notifier)
+                .update((current) => current.copyWith(themeMode: s.first)),
           ),
-          const SizedBox(height: 24),
-          SectionHeader('IA · OpenRouter'),
+          const SizedBox(height: 16),
+          SectionHeader(l10n.languageAndFormat),
           const SizedBox(height: 6),
           Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Clave de API (se guarda cifrada en el dispositivo).',
-                    style: TextStyle(fontSize: 12),
+            child: Column(
+              children: [
+                DropdownButtonFormField<String>(
+                  initialValue: settings.languageCode,
+                  decoration: InputDecoration(
+                    labelText: l10n.language,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16),
                   ),
-                  if (defaultTargetPlatform == TargetPlatform.linux) ...[
-                    const SizedBox(height: 6),
-                    const Text(
-                      'En Linux se guarda sin cifrar (no hay secret service).',
-                      style: TextStyle(fontSize: 11, color: Colors.orange),
+                  items: [
+                    DropdownMenuItem(value: 'es', child: Text(l10n.spanish)),
+                    DropdownMenuItem(value: 'en', child: Text(l10n.english)),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+                    ref
+                        .read(appSettingsProvider.notifier)
+                        .update(
+                          (current) => current.copyWith(languageCode: value),
+                        );
+                  },
+                ),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<DateFormatPreference>(
+                  initialValue: settings.dateFormat,
+                  decoration: InputDecoration(
+                    labelText: l10n.dateFormat,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                  ),
+                  items: [
+                    DropdownMenuItem(
+                      value: DateFormatPreference.locale,
+                      child: Text(l10n.accordingToLanguage),
+                    ),
+                    DropdownMenuItem(
+                      value: DateFormatPreference.dayMonthYear,
+                      child: Text('DD/MM/YYYY'),
+                    ),
+                    DropdownMenuItem(
+                      value: DateFormatPreference.monthDayYear,
+                      child: Text('MM/DD/YYYY'),
                     ),
                   ],
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _apiKeyController,
-                    obscureText: true,
-                    decoration: InputDecoration(
-                      hintText: 'sk-or-…',
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.save_outlined),
-                        onPressed: _saveApiKey,
-                        tooltip: 'Guardar',
-                      ),
-                    ),
-                    onSubmitted: (_) => _saveApiKey(),
+                  onChanged: (value) {
+                    if (value == null) return;
+                    ref
+                        .read(appSettingsProvider.notifier)
+                        .update(
+                          (current) => current.copyWith(dateFormat: value),
+                        );
+                  },
+                ),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<HourFormatPreference>(
+                  initialValue: settings.hourFormat,
+                  decoration: InputDecoration(
+                    labelText: l10n.hourFormat,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16),
                   ),
-                ],
-              ),
+                  items: [
+                    DropdownMenuItem(
+                      value: HourFormatPreference.locale,
+                      child: Text(l10n.accordingToLanguage),
+                    ),
+                    DropdownMenuItem(
+                      value: HourFormatPreference.h24,
+                      child: Text('24 horas'),
+                    ),
+                    DropdownMenuItem(
+                      value: HourFormatPreference.h12,
+                      child: Text('12 horas'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+                    ref
+                        .read(appSettingsProvider.notifier)
+                        .update(
+                          (current) => current.copyWith(hourFormat: value),
+                        );
+                  },
+                ),
+                const SizedBox(height: 10),
+                SwitchListTile(
+                  title: Text(l10n.weekStartsMonday),
+                  value: settings.weekStartsMonday,
+                  onChanged: (value) => ref
+                      .read(appSettingsProvider.notifier)
+                      .update(
+                        (current) => current.copyWith(weekStartsMonday: value),
+                      ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 24),
           const SizedBox(height: 24),
-          SectionHeader('Acerca de'),
+          SectionHeader(l10n.about),
           const SizedBox(height: 6),
           Card(
             child: ListTile(
@@ -148,7 +186,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          SectionHeader('Datos'),
+          SectionHeader(l10n.data),
           const SizedBox(height: 6),
           Card(
             child: Column(
