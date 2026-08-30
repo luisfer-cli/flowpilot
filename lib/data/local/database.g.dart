@@ -5822,6 +5822,783 @@ class TimeBlocksCompanion extends UpdateCompanion<TimeBlock> {
   }
 }
 
+class $ScheduleTemplatesTable extends ScheduleTemplates
+    with TableInfo<$ScheduleTemplatesTable, ScheduleTemplate> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ScheduleTemplatesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _activeMeta = const VerificationMeta('active');
+  @override
+  late final GeneratedColumn<bool> active = GeneratedColumn<bool>(
+    'active',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("active" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, name, active, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'schedule_templates';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ScheduleTemplate> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('active')) {
+      context.handle(
+        _activeMeta,
+        active.isAcceptableOrUnknown(data['active']!, _activeMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => const {};
+  @override
+  ScheduleTemplate map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ScheduleTemplate(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      active: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}active'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ScheduleTemplatesTable createAlias(String alias) {
+    return $ScheduleTemplatesTable(attachedDatabase, alias);
+  }
+}
+
+class ScheduleTemplate extends DataClass
+    implements Insertable<ScheduleTemplate> {
+  final String id;
+  final String name;
+  final bool active;
+  final DateTime createdAt;
+  const ScheduleTemplate({
+    required this.id,
+    required this.name,
+    required this.active,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    map['active'] = Variable<bool>(active);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  ScheduleTemplatesCompanion toCompanion(bool nullToAbsent) {
+    return ScheduleTemplatesCompanion(
+      id: Value(id),
+      name: Value(name),
+      active: Value(active),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory ScheduleTemplate.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ScheduleTemplate(
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      active: serializer.fromJson<bool>(json['active']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'active': serializer.toJson<bool>(active),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  ScheduleTemplate copyWith({
+    String? id,
+    String? name,
+    bool? active,
+    DateTime? createdAt,
+  }) => ScheduleTemplate(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    active: active ?? this.active,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  ScheduleTemplate copyWithCompanion(ScheduleTemplatesCompanion data) {
+    return ScheduleTemplate(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      active: data.active.present ? data.active.value : this.active,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ScheduleTemplate(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('active: $active, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, active, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ScheduleTemplate &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.active == this.active &&
+          other.createdAt == this.createdAt);
+}
+
+class ScheduleTemplatesCompanion extends UpdateCompanion<ScheduleTemplate> {
+  final Value<String> id;
+  final Value<String> name;
+  final Value<bool> active;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const ScheduleTemplatesCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.active = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ScheduleTemplatesCompanion.insert({
+    required String id,
+    required String name,
+    this.active = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       name = Value(name);
+  static Insertable<ScheduleTemplate> custom({
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<bool>? active,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (active != null) 'active': active,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ScheduleTemplatesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? name,
+    Value<bool>? active,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return ScheduleTemplatesCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      active: active ?? this.active,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (active.present) {
+      map['active'] = Variable<bool>(active.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ScheduleTemplatesCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('active: $active, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ScheduleTemplateBlocksTable extends ScheduleTemplateBlocks
+    with TableInfo<$ScheduleTemplateBlocksTable, ScheduleTemplateBlock> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ScheduleTemplateBlocksTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _templateIdMeta = const VerificationMeta(
+    'templateId',
+  );
+  @override
+  late final GeneratedColumn<String> templateId = GeneratedColumn<String>(
+    'template_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _weekdayMeta = const VerificationMeta(
+    'weekday',
+  );
+  @override
+  late final GeneratedColumn<int> weekday = GeneratedColumn<int>(
+    'weekday',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _startMinutesMeta = const VerificationMeta(
+    'startMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> startMinutes = GeneratedColumn<int>(
+    'start_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _endMinutesMeta = const VerificationMeta(
+    'endMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> endMinutes = GeneratedColumn<int>(
+    'end_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+    'type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('fixed'),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    templateId,
+    weekday,
+    startMinutes,
+    endMinutes,
+    title,
+    type,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'schedule_template_blocks';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ScheduleTemplateBlock> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('template_id')) {
+      context.handle(
+        _templateIdMeta,
+        templateId.isAcceptableOrUnknown(data['template_id']!, _templateIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_templateIdMeta);
+    }
+    if (data.containsKey('weekday')) {
+      context.handle(
+        _weekdayMeta,
+        weekday.isAcceptableOrUnknown(data['weekday']!, _weekdayMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_weekdayMeta);
+    }
+    if (data.containsKey('start_minutes')) {
+      context.handle(
+        _startMinutesMeta,
+        startMinutes.isAcceptableOrUnknown(
+          data['start_minutes']!,
+          _startMinutesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_startMinutesMeta);
+    }
+    if (data.containsKey('end_minutes')) {
+      context.handle(
+        _endMinutesMeta,
+        endMinutes.isAcceptableOrUnknown(data['end_minutes']!, _endMinutesMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_endMinutesMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+        _typeMeta,
+        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => const {};
+  @override
+  ScheduleTemplateBlock map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ScheduleTemplateBlock(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      templateId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}template_id'],
+      )!,
+      weekday: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}weekday'],
+      )!,
+      startMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}start_minutes'],
+      )!,
+      endMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}end_minutes'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      type: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}type'],
+      )!,
+    );
+  }
+
+  @override
+  $ScheduleTemplateBlocksTable createAlias(String alias) {
+    return $ScheduleTemplateBlocksTable(attachedDatabase, alias);
+  }
+}
+
+class ScheduleTemplateBlock extends DataClass
+    implements Insertable<ScheduleTemplateBlock> {
+  final String id;
+  final String templateId;
+  final int weekday;
+  final int startMinutes;
+  final int endMinutes;
+  final String title;
+  final String type;
+  const ScheduleTemplateBlock({
+    required this.id,
+    required this.templateId,
+    required this.weekday,
+    required this.startMinutes,
+    required this.endMinutes,
+    required this.title,
+    required this.type,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['template_id'] = Variable<String>(templateId);
+    map['weekday'] = Variable<int>(weekday);
+    map['start_minutes'] = Variable<int>(startMinutes);
+    map['end_minutes'] = Variable<int>(endMinutes);
+    map['title'] = Variable<String>(title);
+    map['type'] = Variable<String>(type);
+    return map;
+  }
+
+  ScheduleTemplateBlocksCompanion toCompanion(bool nullToAbsent) {
+    return ScheduleTemplateBlocksCompanion(
+      id: Value(id),
+      templateId: Value(templateId),
+      weekday: Value(weekday),
+      startMinutes: Value(startMinutes),
+      endMinutes: Value(endMinutes),
+      title: Value(title),
+      type: Value(type),
+    );
+  }
+
+  factory ScheduleTemplateBlock.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ScheduleTemplateBlock(
+      id: serializer.fromJson<String>(json['id']),
+      templateId: serializer.fromJson<String>(json['templateId']),
+      weekday: serializer.fromJson<int>(json['weekday']),
+      startMinutes: serializer.fromJson<int>(json['startMinutes']),
+      endMinutes: serializer.fromJson<int>(json['endMinutes']),
+      title: serializer.fromJson<String>(json['title']),
+      type: serializer.fromJson<String>(json['type']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'templateId': serializer.toJson<String>(templateId),
+      'weekday': serializer.toJson<int>(weekday),
+      'startMinutes': serializer.toJson<int>(startMinutes),
+      'endMinutes': serializer.toJson<int>(endMinutes),
+      'title': serializer.toJson<String>(title),
+      'type': serializer.toJson<String>(type),
+    };
+  }
+
+  ScheduleTemplateBlock copyWith({
+    String? id,
+    String? templateId,
+    int? weekday,
+    int? startMinutes,
+    int? endMinutes,
+    String? title,
+    String? type,
+  }) => ScheduleTemplateBlock(
+    id: id ?? this.id,
+    templateId: templateId ?? this.templateId,
+    weekday: weekday ?? this.weekday,
+    startMinutes: startMinutes ?? this.startMinutes,
+    endMinutes: endMinutes ?? this.endMinutes,
+    title: title ?? this.title,
+    type: type ?? this.type,
+  );
+  ScheduleTemplateBlock copyWithCompanion(
+    ScheduleTemplateBlocksCompanion data,
+  ) {
+    return ScheduleTemplateBlock(
+      id: data.id.present ? data.id.value : this.id,
+      templateId: data.templateId.present
+          ? data.templateId.value
+          : this.templateId,
+      weekday: data.weekday.present ? data.weekday.value : this.weekday,
+      startMinutes: data.startMinutes.present
+          ? data.startMinutes.value
+          : this.startMinutes,
+      endMinutes: data.endMinutes.present
+          ? data.endMinutes.value
+          : this.endMinutes,
+      title: data.title.present ? data.title.value : this.title,
+      type: data.type.present ? data.type.value : this.type,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ScheduleTemplateBlock(')
+          ..write('id: $id, ')
+          ..write('templateId: $templateId, ')
+          ..write('weekday: $weekday, ')
+          ..write('startMinutes: $startMinutes, ')
+          ..write('endMinutes: $endMinutes, ')
+          ..write('title: $title, ')
+          ..write('type: $type')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    templateId,
+    weekday,
+    startMinutes,
+    endMinutes,
+    title,
+    type,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ScheduleTemplateBlock &&
+          other.id == this.id &&
+          other.templateId == this.templateId &&
+          other.weekday == this.weekday &&
+          other.startMinutes == this.startMinutes &&
+          other.endMinutes == this.endMinutes &&
+          other.title == this.title &&
+          other.type == this.type);
+}
+
+class ScheduleTemplateBlocksCompanion
+    extends UpdateCompanion<ScheduleTemplateBlock> {
+  final Value<String> id;
+  final Value<String> templateId;
+  final Value<int> weekday;
+  final Value<int> startMinutes;
+  final Value<int> endMinutes;
+  final Value<String> title;
+  final Value<String> type;
+  final Value<int> rowid;
+  const ScheduleTemplateBlocksCompanion({
+    this.id = const Value.absent(),
+    this.templateId = const Value.absent(),
+    this.weekday = const Value.absent(),
+    this.startMinutes = const Value.absent(),
+    this.endMinutes = const Value.absent(),
+    this.title = const Value.absent(),
+    this.type = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ScheduleTemplateBlocksCompanion.insert({
+    required String id,
+    required String templateId,
+    required int weekday,
+    required int startMinutes,
+    required int endMinutes,
+    required String title,
+    this.type = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       templateId = Value(templateId),
+       weekday = Value(weekday),
+       startMinutes = Value(startMinutes),
+       endMinutes = Value(endMinutes),
+       title = Value(title);
+  static Insertable<ScheduleTemplateBlock> custom({
+    Expression<String>? id,
+    Expression<String>? templateId,
+    Expression<int>? weekday,
+    Expression<int>? startMinutes,
+    Expression<int>? endMinutes,
+    Expression<String>? title,
+    Expression<String>? type,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (templateId != null) 'template_id': templateId,
+      if (weekday != null) 'weekday': weekday,
+      if (startMinutes != null) 'start_minutes': startMinutes,
+      if (endMinutes != null) 'end_minutes': endMinutes,
+      if (title != null) 'title': title,
+      if (type != null) 'type': type,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ScheduleTemplateBlocksCompanion copyWith({
+    Value<String>? id,
+    Value<String>? templateId,
+    Value<int>? weekday,
+    Value<int>? startMinutes,
+    Value<int>? endMinutes,
+    Value<String>? title,
+    Value<String>? type,
+    Value<int>? rowid,
+  }) {
+    return ScheduleTemplateBlocksCompanion(
+      id: id ?? this.id,
+      templateId: templateId ?? this.templateId,
+      weekday: weekday ?? this.weekday,
+      startMinutes: startMinutes ?? this.startMinutes,
+      endMinutes: endMinutes ?? this.endMinutes,
+      title: title ?? this.title,
+      type: type ?? this.type,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (templateId.present) {
+      map['template_id'] = Variable<String>(templateId.value);
+    }
+    if (weekday.present) {
+      map['weekday'] = Variable<int>(weekday.value);
+    }
+    if (startMinutes.present) {
+      map['start_minutes'] = Variable<int>(startMinutes.value);
+    }
+    if (endMinutes.present) {
+      map['end_minutes'] = Variable<int>(endMinutes.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ScheduleTemplateBlocksCompanion(')
+          ..write('id: $id, ')
+          ..write('templateId: $templateId, ')
+          ..write('weekday: $weekday, ')
+          ..write('startMinutes: $startMinutes, ')
+          ..write('endMinutes: $endMinutes, ')
+          ..write('title: $title, ')
+          ..write('type: $type, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $TimeEntriesTable extends TimeEntries
     with TableInfo<$TimeEntriesTable, TimeEntry> {
   @override
@@ -5852,6 +6629,17 @@ class $TimeEntriesTable extends TimeEntries
   @override
   late final GeneratedColumn<String> projectId = GeneratedColumn<String>(
     'project_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _categoryIdMeta = const VerificationMeta(
+    'categoryId',
+  );
+  @override
+  late final GeneratedColumn<String> categoryId = GeneratedColumn<String>(
+    'category_id',
     aliasedName,
     true,
     type: DriftSqlType.string,
@@ -5922,6 +6710,7 @@ class $TimeEntriesTable extends TimeEntries
     id,
     taskId,
     projectId,
+    categoryId,
     start,
     end,
     durationMinutes,
@@ -5956,6 +6745,12 @@ class $TimeEntriesTable extends TimeEntries
       context.handle(
         _projectIdMeta,
         projectId.isAcceptableOrUnknown(data['project_id']!, _projectIdMeta),
+      );
+    }
+    if (data.containsKey('category_id')) {
+      context.handle(
+        _categoryIdMeta,
+        categoryId.isAcceptableOrUnknown(data['category_id']!, _categoryIdMeta),
       );
     }
     if (data.containsKey('start')) {
@@ -6020,6 +6815,10 @@ class $TimeEntriesTable extends TimeEntries
         DriftSqlType.string,
         data['${effectivePrefix}project_id'],
       ),
+      categoryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}category_id'],
+      ),
       start: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}start'],
@@ -6057,6 +6856,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
   final String id;
   final String? taskId;
   final String? projectId;
+  final String? categoryId;
   final DateTime start;
   final DateTime? end;
   final int? durationMinutes;
@@ -6067,6 +6867,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
     required this.id,
     this.taskId,
     this.projectId,
+    this.categoryId,
     required this.start,
     this.end,
     this.durationMinutes,
@@ -6083,6 +6884,9 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
     }
     if (!nullToAbsent || projectId != null) {
       map['project_id'] = Variable<String>(projectId);
+    }
+    if (!nullToAbsent || categoryId != null) {
+      map['category_id'] = Variable<String>(categoryId);
     }
     map['start'] = Variable<DateTime>(start);
     if (!nullToAbsent || end != null) {
@@ -6108,6 +6912,9 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
       projectId: projectId == null && nullToAbsent
           ? const Value.absent()
           : Value(projectId),
+      categoryId: categoryId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(categoryId),
       start: Value(start),
       end: end == null && nullToAbsent ? const Value.absent() : Value(end),
       durationMinutes: durationMinutes == null && nullToAbsent
@@ -6128,6 +6935,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
       id: serializer.fromJson<String>(json['id']),
       taskId: serializer.fromJson<String?>(json['taskId']),
       projectId: serializer.fromJson<String?>(json['projectId']),
+      categoryId: serializer.fromJson<String?>(json['categoryId']),
       start: serializer.fromJson<DateTime>(json['start']),
       end: serializer.fromJson<DateTime?>(json['end']),
       durationMinutes: serializer.fromJson<int?>(json['durationMinutes']),
@@ -6143,6 +6951,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
       'id': serializer.toJson<String>(id),
       'taskId': serializer.toJson<String?>(taskId),
       'projectId': serializer.toJson<String?>(projectId),
+      'categoryId': serializer.toJson<String?>(categoryId),
       'start': serializer.toJson<DateTime>(start),
       'end': serializer.toJson<DateTime?>(end),
       'durationMinutes': serializer.toJson<int?>(durationMinutes),
@@ -6156,6 +6965,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
     String? id,
     Value<String?> taskId = const Value.absent(),
     Value<String?> projectId = const Value.absent(),
+    Value<String?> categoryId = const Value.absent(),
     DateTime? start,
     Value<DateTime?> end = const Value.absent(),
     Value<int?> durationMinutes = const Value.absent(),
@@ -6166,6 +6976,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
     id: id ?? this.id,
     taskId: taskId.present ? taskId.value : this.taskId,
     projectId: projectId.present ? projectId.value : this.projectId,
+    categoryId: categoryId.present ? categoryId.value : this.categoryId,
     start: start ?? this.start,
     end: end.present ? end.value : this.end,
     durationMinutes: durationMinutes.present
@@ -6180,6 +6991,9 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
       id: data.id.present ? data.id.value : this.id,
       taskId: data.taskId.present ? data.taskId.value : this.taskId,
       projectId: data.projectId.present ? data.projectId.value : this.projectId,
+      categoryId: data.categoryId.present
+          ? data.categoryId.value
+          : this.categoryId,
       start: data.start.present ? data.start.value : this.start,
       end: data.end.present ? data.end.value : this.end,
       durationMinutes: data.durationMinutes.present
@@ -6197,6 +7011,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
           ..write('id: $id, ')
           ..write('taskId: $taskId, ')
           ..write('projectId: $projectId, ')
+          ..write('categoryId: $categoryId, ')
           ..write('start: $start, ')
           ..write('end: $end, ')
           ..write('durationMinutes: $durationMinutes, ')
@@ -6212,6 +7027,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
     id,
     taskId,
     projectId,
+    categoryId,
     start,
     end,
     durationMinutes,
@@ -6226,6 +7042,7 @@ class TimeEntry extends DataClass implements Insertable<TimeEntry> {
           other.id == this.id &&
           other.taskId == this.taskId &&
           other.projectId == this.projectId &&
+          other.categoryId == this.categoryId &&
           other.start == this.start &&
           other.end == this.end &&
           other.durationMinutes == this.durationMinutes &&
@@ -6238,6 +7055,7 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
   final Value<String> id;
   final Value<String?> taskId;
   final Value<String?> projectId;
+  final Value<String?> categoryId;
   final Value<DateTime> start;
   final Value<DateTime?> end;
   final Value<int?> durationMinutes;
@@ -6249,6 +7067,7 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
     this.id = const Value.absent(),
     this.taskId = const Value.absent(),
     this.projectId = const Value.absent(),
+    this.categoryId = const Value.absent(),
     this.start = const Value.absent(),
     this.end = const Value.absent(),
     this.durationMinutes = const Value.absent(),
@@ -6261,6 +7080,7 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
     required String id,
     this.taskId = const Value.absent(),
     this.projectId = const Value.absent(),
+    this.categoryId = const Value.absent(),
     required DateTime start,
     this.end = const Value.absent(),
     this.durationMinutes = const Value.absent(),
@@ -6274,6 +7094,7 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
     Expression<String>? id,
     Expression<String>? taskId,
     Expression<String>? projectId,
+    Expression<String>? categoryId,
     Expression<DateTime>? start,
     Expression<DateTime>? end,
     Expression<int>? durationMinutes,
@@ -6286,6 +7107,7 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
       if (id != null) 'id': id,
       if (taskId != null) 'task_id': taskId,
       if (projectId != null) 'project_id': projectId,
+      if (categoryId != null) 'category_id': categoryId,
       if (start != null) 'start': start,
       if (end != null) 'end': end,
       if (durationMinutes != null) 'duration_minutes': durationMinutes,
@@ -6300,6 +7122,7 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
     Value<String>? id,
     Value<String?>? taskId,
     Value<String?>? projectId,
+    Value<String?>? categoryId,
     Value<DateTime>? start,
     Value<DateTime?>? end,
     Value<int?>? durationMinutes,
@@ -6312,6 +7135,7 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
       id: id ?? this.id,
       taskId: taskId ?? this.taskId,
       projectId: projectId ?? this.projectId,
+      categoryId: categoryId ?? this.categoryId,
       start: start ?? this.start,
       end: end ?? this.end,
       durationMinutes: durationMinutes ?? this.durationMinutes,
@@ -6333,6 +7157,9 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
     }
     if (projectId.present) {
       map['project_id'] = Variable<String>(projectId.value);
+    }
+    if (categoryId.present) {
+      map['category_id'] = Variable<String>(categoryId.value);
     }
     if (start.present) {
       map['start'] = Variable<DateTime>(start.value);
@@ -6364,11 +7191,315 @@ class TimeEntriesCompanion extends UpdateCompanion<TimeEntry> {
           ..write('id: $id, ')
           ..write('taskId: $taskId, ')
           ..write('projectId: $projectId, ')
+          ..write('categoryId: $categoryId, ')
           ..write('start: $start, ')
           ..write('end: $end, ')
           ..write('durationMinutes: $durationMinutes, ')
           ..write('source: $source, ')
           ..write('note: $note, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ActivityCategoriesTable extends ActivityCategories
+    with TableInfo<$ActivityCategoriesTable, ActivityCategory> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ActivityCategoriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<int> color = GeneratedColumn<int>(
+    'color',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0x5B8DEF),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, name, color, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'activity_categories';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ActivityCategory> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => const {};
+  @override
+  ActivityCategory map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ActivityCategory(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}color'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ActivityCategoriesTable createAlias(String alias) {
+    return $ActivityCategoriesTable(attachedDatabase, alias);
+  }
+}
+
+class ActivityCategory extends DataClass
+    implements Insertable<ActivityCategory> {
+  final String id;
+  final String name;
+  final int color;
+  final DateTime createdAt;
+  const ActivityCategory({
+    required this.id,
+    required this.name,
+    required this.color,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    map['color'] = Variable<int>(color);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  ActivityCategoriesCompanion toCompanion(bool nullToAbsent) {
+    return ActivityCategoriesCompanion(
+      id: Value(id),
+      name: Value(name),
+      color: Value(color),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory ActivityCategory.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ActivityCategory(
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      color: serializer.fromJson<int>(json['color']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'color': serializer.toJson<int>(color),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  ActivityCategory copyWith({
+    String? id,
+    String? name,
+    int? color,
+    DateTime? createdAt,
+  }) => ActivityCategory(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    color: color ?? this.color,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  ActivityCategory copyWithCompanion(ActivityCategoriesCompanion data) {
+    return ActivityCategory(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      color: data.color.present ? data.color.value : this.color,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ActivityCategory(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('color: $color, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, color, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ActivityCategory &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.color == this.color &&
+          other.createdAt == this.createdAt);
+}
+
+class ActivityCategoriesCompanion extends UpdateCompanion<ActivityCategory> {
+  final Value<String> id;
+  final Value<String> name;
+  final Value<int> color;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const ActivityCategoriesCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.color = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ActivityCategoriesCompanion.insert({
+    required String id,
+    required String name,
+    this.color = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       name = Value(name);
+  static Insertable<ActivityCategory> custom({
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<int>? color,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (color != null) 'color': color,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ActivityCategoriesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? name,
+    Value<int>? color,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return ActivityCategoriesCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      color: color ?? this.color,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (color.present) {
+      map['color'] = Variable<int>(color.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ActivityCategoriesCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('color: $color, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -11809,7 +12940,13 @@ abstract class _$FlowPilotDatabase extends GeneratedDatabase {
     this,
   );
   late final $TimeBlocksTable timeBlocks = $TimeBlocksTable(this);
+  late final $ScheduleTemplatesTable scheduleTemplates =
+      $ScheduleTemplatesTable(this);
+  late final $ScheduleTemplateBlocksTable scheduleTemplateBlocks =
+      $ScheduleTemplateBlocksTable(this);
   late final $TimeEntriesTable timeEntries = $TimeEntriesTable(this);
+  late final $ActivityCategoriesTable activityCategories =
+      $ActivityCategoriesTable(this);
   late final $PomodoroSessionsTable pomodoroSessions = $PomodoroSessionsTable(
     this,
   );
@@ -11845,7 +12982,10 @@ abstract class _$FlowPilotDatabase extends GeneratedDatabase {
     tasks,
     recurrenceRules,
     timeBlocks,
+    scheduleTemplates,
+    scheduleTemplateBlocks,
     timeEntries,
+    activityCategories,
     pomodoroSessions,
     habits,
     habitCompletions,
@@ -14842,11 +15982,469 @@ typedef $$TimeBlocksTableProcessedTableManager =
       TimeBlock,
       PrefetchHooks Function()
     >;
+typedef $$ScheduleTemplatesTableCreateCompanionBuilder =
+    ScheduleTemplatesCompanion Function({
+      required String id,
+      required String name,
+      Value<bool> active,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+typedef $$ScheduleTemplatesTableUpdateCompanionBuilder =
+    ScheduleTemplatesCompanion Function({
+      Value<String> id,
+      Value<String> name,
+      Value<bool> active,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$ScheduleTemplatesTableFilterComposer
+    extends Composer<_$FlowPilotDatabase, $ScheduleTemplatesTable> {
+  $$ScheduleTemplatesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get active => $composableBuilder(
+    column: $table.active,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ScheduleTemplatesTableOrderingComposer
+    extends Composer<_$FlowPilotDatabase, $ScheduleTemplatesTable> {
+  $$ScheduleTemplatesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get active => $composableBuilder(
+    column: $table.active,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ScheduleTemplatesTableAnnotationComposer
+    extends Composer<_$FlowPilotDatabase, $ScheduleTemplatesTable> {
+  $$ScheduleTemplatesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<bool> get active =>
+      $composableBuilder(column: $table.active, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$ScheduleTemplatesTableTableManager
+    extends
+        RootTableManager<
+          _$FlowPilotDatabase,
+          $ScheduleTemplatesTable,
+          ScheduleTemplate,
+          $$ScheduleTemplatesTableFilterComposer,
+          $$ScheduleTemplatesTableOrderingComposer,
+          $$ScheduleTemplatesTableAnnotationComposer,
+          $$ScheduleTemplatesTableCreateCompanionBuilder,
+          $$ScheduleTemplatesTableUpdateCompanionBuilder,
+          (
+            ScheduleTemplate,
+            BaseReferences<
+              _$FlowPilotDatabase,
+              $ScheduleTemplatesTable,
+              ScheduleTemplate
+            >,
+          ),
+          ScheduleTemplate,
+          PrefetchHooks Function()
+        > {
+  $$ScheduleTemplatesTableTableManager(
+    _$FlowPilotDatabase db,
+    $ScheduleTemplatesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ScheduleTemplatesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ScheduleTemplatesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ScheduleTemplatesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<bool> active = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ScheduleTemplatesCompanion(
+                id: id,
+                name: name,
+                active: active,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String name,
+                Value<bool> active = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ScheduleTemplatesCompanion.insert(
+                id: id,
+                name: name,
+                active: active,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ScheduleTemplatesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$FlowPilotDatabase,
+      $ScheduleTemplatesTable,
+      ScheduleTemplate,
+      $$ScheduleTemplatesTableFilterComposer,
+      $$ScheduleTemplatesTableOrderingComposer,
+      $$ScheduleTemplatesTableAnnotationComposer,
+      $$ScheduleTemplatesTableCreateCompanionBuilder,
+      $$ScheduleTemplatesTableUpdateCompanionBuilder,
+      (
+        ScheduleTemplate,
+        BaseReferences<
+          _$FlowPilotDatabase,
+          $ScheduleTemplatesTable,
+          ScheduleTemplate
+        >,
+      ),
+      ScheduleTemplate,
+      PrefetchHooks Function()
+    >;
+typedef $$ScheduleTemplateBlocksTableCreateCompanionBuilder =
+    ScheduleTemplateBlocksCompanion Function({
+      required String id,
+      required String templateId,
+      required int weekday,
+      required int startMinutes,
+      required int endMinutes,
+      required String title,
+      Value<String> type,
+      Value<int> rowid,
+    });
+typedef $$ScheduleTemplateBlocksTableUpdateCompanionBuilder =
+    ScheduleTemplateBlocksCompanion Function({
+      Value<String> id,
+      Value<String> templateId,
+      Value<int> weekday,
+      Value<int> startMinutes,
+      Value<int> endMinutes,
+      Value<String> title,
+      Value<String> type,
+      Value<int> rowid,
+    });
+
+class $$ScheduleTemplateBlocksTableFilterComposer
+    extends Composer<_$FlowPilotDatabase, $ScheduleTemplateBlocksTable> {
+  $$ScheduleTemplateBlocksTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get templateId => $composableBuilder(
+    column: $table.templateId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get weekday => $composableBuilder(
+    column: $table.weekday,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get startMinutes => $composableBuilder(
+    column: $table.startMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get endMinutes => $composableBuilder(
+    column: $table.endMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ScheduleTemplateBlocksTableOrderingComposer
+    extends Composer<_$FlowPilotDatabase, $ScheduleTemplateBlocksTable> {
+  $$ScheduleTemplateBlocksTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get templateId => $composableBuilder(
+    column: $table.templateId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get weekday => $composableBuilder(
+    column: $table.weekday,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get startMinutes => $composableBuilder(
+    column: $table.startMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get endMinutes => $composableBuilder(
+    column: $table.endMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ScheduleTemplateBlocksTableAnnotationComposer
+    extends Composer<_$FlowPilotDatabase, $ScheduleTemplateBlocksTable> {
+  $$ScheduleTemplateBlocksTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get templateId => $composableBuilder(
+    column: $table.templateId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get weekday =>
+      $composableBuilder(column: $table.weekday, builder: (column) => column);
+
+  GeneratedColumn<int> get startMinutes => $composableBuilder(
+    column: $table.startMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get endMinutes => $composableBuilder(
+    column: $table.endMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+}
+
+class $$ScheduleTemplateBlocksTableTableManager
+    extends
+        RootTableManager<
+          _$FlowPilotDatabase,
+          $ScheduleTemplateBlocksTable,
+          ScheduleTemplateBlock,
+          $$ScheduleTemplateBlocksTableFilterComposer,
+          $$ScheduleTemplateBlocksTableOrderingComposer,
+          $$ScheduleTemplateBlocksTableAnnotationComposer,
+          $$ScheduleTemplateBlocksTableCreateCompanionBuilder,
+          $$ScheduleTemplateBlocksTableUpdateCompanionBuilder,
+          (
+            ScheduleTemplateBlock,
+            BaseReferences<
+              _$FlowPilotDatabase,
+              $ScheduleTemplateBlocksTable,
+              ScheduleTemplateBlock
+            >,
+          ),
+          ScheduleTemplateBlock,
+          PrefetchHooks Function()
+        > {
+  $$ScheduleTemplateBlocksTableTableManager(
+    _$FlowPilotDatabase db,
+    $ScheduleTemplateBlocksTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ScheduleTemplateBlocksTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$ScheduleTemplateBlocksTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$ScheduleTemplateBlocksTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> templateId = const Value.absent(),
+                Value<int> weekday = const Value.absent(),
+                Value<int> startMinutes = const Value.absent(),
+                Value<int> endMinutes = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<String> type = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ScheduleTemplateBlocksCompanion(
+                id: id,
+                templateId: templateId,
+                weekday: weekday,
+                startMinutes: startMinutes,
+                endMinutes: endMinutes,
+                title: title,
+                type: type,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String templateId,
+                required int weekday,
+                required int startMinutes,
+                required int endMinutes,
+                required String title,
+                Value<String> type = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ScheduleTemplateBlocksCompanion.insert(
+                id: id,
+                templateId: templateId,
+                weekday: weekday,
+                startMinutes: startMinutes,
+                endMinutes: endMinutes,
+                title: title,
+                type: type,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ScheduleTemplateBlocksTableProcessedTableManager =
+    ProcessedTableManager<
+      _$FlowPilotDatabase,
+      $ScheduleTemplateBlocksTable,
+      ScheduleTemplateBlock,
+      $$ScheduleTemplateBlocksTableFilterComposer,
+      $$ScheduleTemplateBlocksTableOrderingComposer,
+      $$ScheduleTemplateBlocksTableAnnotationComposer,
+      $$ScheduleTemplateBlocksTableCreateCompanionBuilder,
+      $$ScheduleTemplateBlocksTableUpdateCompanionBuilder,
+      (
+        ScheduleTemplateBlock,
+        BaseReferences<
+          _$FlowPilotDatabase,
+          $ScheduleTemplateBlocksTable,
+          ScheduleTemplateBlock
+        >,
+      ),
+      ScheduleTemplateBlock,
+      PrefetchHooks Function()
+    >;
 typedef $$TimeEntriesTableCreateCompanionBuilder =
     TimeEntriesCompanion Function({
       required String id,
       Value<String?> taskId,
       Value<String?> projectId,
+      Value<String?> categoryId,
       required DateTime start,
       Value<DateTime?> end,
       Value<int?> durationMinutes,
@@ -14860,6 +16458,7 @@ typedef $$TimeEntriesTableUpdateCompanionBuilder =
       Value<String> id,
       Value<String?> taskId,
       Value<String?> projectId,
+      Value<String?> categoryId,
       Value<DateTime> start,
       Value<DateTime?> end,
       Value<int?> durationMinutes,
@@ -14890,6 +16489,11 @@ class $$TimeEntriesTableFilterComposer
 
   ColumnFilters<String> get projectId => $composableBuilder(
     column: $table.projectId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get categoryId => $composableBuilder(
+    column: $table.categoryId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -14948,6 +16552,11 @@ class $$TimeEntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get categoryId => $composableBuilder(
+    column: $table.categoryId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get start => $composableBuilder(
     column: $table.start,
     builder: (column) => ColumnOrderings(column),
@@ -14996,6 +16605,11 @@ class $$TimeEntriesTableAnnotationComposer
 
   GeneratedColumn<String> get projectId =>
       $composableBuilder(column: $table.projectId, builder: (column) => column);
+
+  GeneratedColumn<String> get categoryId => $composableBuilder(
+    column: $table.categoryId,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get start =>
       $composableBuilder(column: $table.start, builder: (column) => column);
@@ -15054,6 +16668,7 @@ class $$TimeEntriesTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String?> taskId = const Value.absent(),
                 Value<String?> projectId = const Value.absent(),
+                Value<String?> categoryId = const Value.absent(),
                 Value<DateTime> start = const Value.absent(),
                 Value<DateTime?> end = const Value.absent(),
                 Value<int?> durationMinutes = const Value.absent(),
@@ -15065,6 +16680,7 @@ class $$TimeEntriesTableTableManager
                 id: id,
                 taskId: taskId,
                 projectId: projectId,
+                categoryId: categoryId,
                 start: start,
                 end: end,
                 durationMinutes: durationMinutes,
@@ -15078,6 +16694,7 @@ class $$TimeEntriesTableTableManager
                 required String id,
                 Value<String?> taskId = const Value.absent(),
                 Value<String?> projectId = const Value.absent(),
+                Value<String?> categoryId = const Value.absent(),
                 required DateTime start,
                 Value<DateTime?> end = const Value.absent(),
                 Value<int?> durationMinutes = const Value.absent(),
@@ -15089,6 +16706,7 @@ class $$TimeEntriesTableTableManager
                 id: id,
                 taskId: taskId,
                 projectId: projectId,
+                categoryId: categoryId,
                 start: start,
                 end: end,
                 durationMinutes: durationMinutes,
@@ -15120,6 +16738,200 @@ typedef $$TimeEntriesTableProcessedTableManager =
         BaseReferences<_$FlowPilotDatabase, $TimeEntriesTable, TimeEntry>,
       ),
       TimeEntry,
+      PrefetchHooks Function()
+    >;
+typedef $$ActivityCategoriesTableCreateCompanionBuilder =
+    ActivityCategoriesCompanion Function({
+      required String id,
+      required String name,
+      Value<int> color,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+typedef $$ActivityCategoriesTableUpdateCompanionBuilder =
+    ActivityCategoriesCompanion Function({
+      Value<String> id,
+      Value<String> name,
+      Value<int> color,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$ActivityCategoriesTableFilterComposer
+    extends Composer<_$FlowPilotDatabase, $ActivityCategoriesTable> {
+  $$ActivityCategoriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ActivityCategoriesTableOrderingComposer
+    extends Composer<_$FlowPilotDatabase, $ActivityCategoriesTable> {
+  $$ActivityCategoriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ActivityCategoriesTableAnnotationComposer
+    extends Composer<_$FlowPilotDatabase, $ActivityCategoriesTable> {
+  $$ActivityCategoriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<int> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$ActivityCategoriesTableTableManager
+    extends
+        RootTableManager<
+          _$FlowPilotDatabase,
+          $ActivityCategoriesTable,
+          ActivityCategory,
+          $$ActivityCategoriesTableFilterComposer,
+          $$ActivityCategoriesTableOrderingComposer,
+          $$ActivityCategoriesTableAnnotationComposer,
+          $$ActivityCategoriesTableCreateCompanionBuilder,
+          $$ActivityCategoriesTableUpdateCompanionBuilder,
+          (
+            ActivityCategory,
+            BaseReferences<
+              _$FlowPilotDatabase,
+              $ActivityCategoriesTable,
+              ActivityCategory
+            >,
+          ),
+          ActivityCategory,
+          PrefetchHooks Function()
+        > {
+  $$ActivityCategoriesTableTableManager(
+    _$FlowPilotDatabase db,
+    $ActivityCategoriesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ActivityCategoriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ActivityCategoriesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ActivityCategoriesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<int> color = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ActivityCategoriesCompanion(
+                id: id,
+                name: name,
+                color: color,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String name,
+                Value<int> color = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ActivityCategoriesCompanion.insert(
+                id: id,
+                name: name,
+                color: color,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ActivityCategoriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$FlowPilotDatabase,
+      $ActivityCategoriesTable,
+      ActivityCategory,
+      $$ActivityCategoriesTableFilterComposer,
+      $$ActivityCategoriesTableOrderingComposer,
+      $$ActivityCategoriesTableAnnotationComposer,
+      $$ActivityCategoriesTableCreateCompanionBuilder,
+      $$ActivityCategoriesTableUpdateCompanionBuilder,
+      (
+        ActivityCategory,
+        BaseReferences<
+          _$FlowPilotDatabase,
+          $ActivityCategoriesTable,
+          ActivityCategory
+        >,
+      ),
+      ActivityCategory,
       PrefetchHooks Function()
     >;
 typedef $$PomodoroSessionsTableCreateCompanionBuilder =
@@ -18015,8 +19827,17 @@ class $FlowPilotDatabaseManager {
       $$RecurrenceRulesTableTableManager(_db, _db.recurrenceRules);
   $$TimeBlocksTableTableManager get timeBlocks =>
       $$TimeBlocksTableTableManager(_db, _db.timeBlocks);
+  $$ScheduleTemplatesTableTableManager get scheduleTemplates =>
+      $$ScheduleTemplatesTableTableManager(_db, _db.scheduleTemplates);
+  $$ScheduleTemplateBlocksTableTableManager get scheduleTemplateBlocks =>
+      $$ScheduleTemplateBlocksTableTableManager(
+        _db,
+        _db.scheduleTemplateBlocks,
+      );
   $$TimeEntriesTableTableManager get timeEntries =>
       $$TimeEntriesTableTableManager(_db, _db.timeEntries);
+  $$ActivityCategoriesTableTableManager get activityCategories =>
+      $$ActivityCategoriesTableTableManager(_db, _db.activityCategories);
   $$PomodoroSessionsTableTableManager get pomodoroSessions =>
       $$PomodoroSessionsTableTableManager(_db, _db.pomodoroSessions);
   $$HabitsTableTableManager get habits =>

@@ -9,7 +9,6 @@ import '../../core/utils/id.dart';
 import '../../core/utils/time_utils.dart';
 import '../../data/local/database.dart';
 import '../../shared/widgets.dart';
-import 'task_providers.dart';
 import 'widgets/task_editors.dart';
 
 class TaskEditScreen extends ConsumerStatefulWidget {
@@ -44,7 +43,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
 
   // Recurrence
   bool _recurring = false;
-  String _frequency = kFreqWeekly;
+  final String _frequency = kFreqWeekly;
   final int _interval = 1;
   final Set<int> _daysOfWeek = {};
   int? _dayOfMonth;
@@ -255,17 +254,6 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final statuses =
-        ref.watch(statusesProvider).valueOrNull ?? const <TaskStatus>[];
-    final contexts =
-        ref.watch(contextsProvider).valueOrNull ?? const <Context>[];
-    final categories =
-        ref.watch(categoriesProvider).valueOrNull ?? const <Category>[];
-    final tags = ref.watch(tagsProvider).valueOrNull ?? const <Tag>[];
-    final projects =
-        ref.watch(projectsProvider).valueOrNull ?? const <Project>[];
-    final goals = ref.watch(goalsProvider).valueOrNull ?? const <Goal>[];
-
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.taskId == null ? 'Nueva tarea' : 'Editar tarea'),
@@ -310,13 +298,6 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                 ),
                 const SizedBox(height: 20),
                 _dropdown(
-                  'Estado',
-                  statuses,
-                  statuses.map((s) => s.name).toList(),
-                  _status,
-                  (v) => setState(() => _status = v),
-                ),
-                _dropdown(
                   'Prioridad',
                   kPriorityLabels.entries.toList(),
                   kPriorityLabels.keys
@@ -331,46 +312,6 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                       orElse: () => MapEntry(0, kPriorityLabels[0]!),
                     );
                     setState(() => _priority = entry.key);
-                  },
-                ),
-                _dropdown(
-                  'Contexto',
-                  contexts,
-                  contexts.map((c) => c.name).toList(),
-                  _contextId == null ? null : _contextLabel(contexts),
-                  (v) {
-                    final c = contexts.where((x) => x.name == v).firstOrNull;
-                    setState(() => _contextId = c?.id);
-                  },
-                ),
-                _dropdown(
-                  'Categoría',
-                  categories,
-                  categories.map((c) => c.name).toList(),
-                  _categoryId == null ? null : _categoryLabel(categories),
-                  (v) {
-                    final c = categories.where((x) => x.name == v).firstOrNull;
-                    setState(() => _categoryId = c?.id);
-                  },
-                ),
-                _dropdown(
-                  'Proyecto',
-                  projects,
-                  projects.map((p) => p.name).toList(),
-                  _projectId == null ? null : _projectLabel(projects),
-                  (v) {
-                    final p = projects.where((x) => x.name == v).firstOrNull;
-                    setState(() => _projectId = p?.id);
-                  },
-                ),
-                _dropdown(
-                  'Objetivo',
-                  goals,
-                  goals.map((g) => g.title).toList(),
-                  _goalId == null ? null : _goalLabel(goals),
-                  (v) {
-                    final g = goals.where((x) => x.title == v).firstOrNull;
-                    setState(() => _goalId = g?.id);
                   },
                 ),
                 const SizedBox(height: 12),
@@ -422,57 +363,6 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                     ),
                     const SizedBox(width: 12),
                     Expanded(child: _energySelector()),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                SectionHeader('Recurrencia'),
-                SwitchRow(
-                  title: 'Tarea recurrente',
-                  value: _recurring,
-                  onChanged: (v) => setState(() => _recurring = v),
-                ),
-                if (_recurring) ...[
-                  _dropdown(
-                    'Frecuencia',
-                    const ['Diaria', 'Semanal', 'Mensual', 'Cada X días'],
-                    const ['Diaria', 'Semanal', 'Mensual', 'Cada X días'],
-                    _frequencyLabel(),
-                    (v) {
-                      setState(() => _frequency = _frequencyFromLabel(v));
-                    },
-                  ),
-                  if (_frequency == kFreqWeekly)
-                    Wrap(
-                      spacing: 6,
-                      children: [
-                        for (var d = 1; d <= 7; d++)
-                          FilterChip(
-                            label: Text(_weekdayShort(d)),
-                            selected: _daysOfWeek.contains(d),
-                            onSelected: (sel) => setState(() {
-                              sel ? _daysOfWeek.add(d) : _daysOfWeek.remove(d);
-                            }),
-                          ),
-                      ],
-                    ),
-                ],
-                const SizedBox(height: 20),
-                SectionHeader('Etiquetas'),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 4,
-                  children: [
-                    for (final tag in tags)
-                      FilterChip(
-                        label: Text(tag.name),
-                        selected: _selectedTags.contains(tag.id),
-                        onSelected: (sel) => setState(() {
-                          sel
-                              ? _selectedTags.add(tag.id)
-                              : _selectedTags.remove(tag.id);
-                        }),
-                      ),
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -535,47 +425,5 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
             : (v) => v == null ? null : onSelected(v),
       ),
     );
-  }
-
-  String? _contextLabel(List<Context> list) =>
-      list.where((x) => x.id == _contextId).firstOrNull?.name;
-  String? _categoryLabel(List<Category> list) =>
-      list.where((x) => x.id == _categoryId).firstOrNull?.name;
-  String? _projectLabel(List<Project> list) =>
-      list.where((x) => x.id == _projectId).firstOrNull?.name;
-  String? _goalLabel(List<Goal> list) =>
-      list.where((x) => x.id == _goalId).firstOrNull?.title;
-
-  String _frequencyLabel() {
-    switch (_frequency) {
-      case kFreqDaily:
-        return 'Diaria';
-      case kFreqWeekly:
-        return 'Semanal';
-      case kFreqMonthly:
-        return 'Mensual';
-      case kFreqEveryXDays:
-        return 'Cada X días';
-      default:
-        return 'Diaria';
-    }
-  }
-
-  String _frequencyFromLabel(String label) {
-    switch (label) {
-      case 'Semanal':
-        return kFreqWeekly;
-      case 'Mensual':
-        return kFreqMonthly;
-      case 'Cada X días':
-        return kFreqEveryXDays;
-      default:
-        return kFreqDaily;
-    }
-  }
-
-  String _weekdayShort(int d) {
-    const names = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-    return names[d - 1];
   }
 }

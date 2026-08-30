@@ -25,17 +25,26 @@ class TimeEntryRepository {
         .watchSingleOrNull();
   }
 
-  Future<void> startTimer({String? taskId, String? projectId}) {
+  Future<String> startTimer({
+    String? taskId,
+    String? projectId,
+    String? categoryId,
+    String source = 'manual',
+  }) {
+    final id = DateTime.now().microsecondsSinceEpoch.toString();
     return _db
         .into(_db.timeEntries)
         .insert(
           TimeEntriesCompanion.insert(
-            id: DateTime.now().microsecondsSinceEpoch.toString(),
+            id: id,
             start: DateTime.now(),
             taskId: Value(taskId),
             projectId: Value(projectId),
+            categoryId: Value(categoryId),
+            source: Value(source),
           ),
-        );
+        )
+        .then((_) => id);
   }
 
   Future<void> stopTimer(String entryId) async {
@@ -76,6 +85,8 @@ class TimeEntryRepository {
     required DateTime end,
     String? taskId,
     String? projectId,
+    String? categoryId,
+    String source = 'manual',
     String? note,
   }) {
     final minutes = end.difference(start).inMinutes;
@@ -89,6 +100,8 @@ class TimeEntryRepository {
             durationMinutes: Value(minutes < 1 ? 1 : minutes),
             taskId: Value(taskId),
             projectId: Value(projectId),
+            categoryId: Value(categoryId),
+            source: Value(source),
             note: Value(note),
           ),
         );

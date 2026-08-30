@@ -137,16 +137,43 @@ class TimeBlocks extends Table {
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }
 
+/// Reusable weekly schedule template.
+class ScheduleTemplates extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  BoolColumn get active => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+/// A block belonging to a weekly schedule template.
+class ScheduleTemplateBlocks extends Table {
+  TextColumn get id => text()();
+  TextColumn get templateId => text()();
+  IntColumn get weekday => integer()();
+  IntColumn get startMinutes => integer()();
+  IntColumn get endMinutes => integer()();
+  TextColumn get title => text()();
+  TextColumn get type => text().withDefault(const Constant('fixed'))();
+}
+
 /// Manual time tracking entries. A running entry has [end] == null.
 class TimeEntries extends Table {
   TextColumn get id => text()();
   TextColumn get taskId => text().nullable()();
   TextColumn get projectId => text().nullable()();
+  TextColumn get categoryId => text().nullable()();
   DateTimeColumn get start => dateTime()();
   DateTimeColumn get end => dateTime().nullable()();
   IntColumn get durationMinutes => integer().nullable()();
   TextColumn get source => text().withDefault(const Constant('manual'))();
   TextColumn get note => text().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+class ActivityCategories extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  IntColumn get color => integer().withDefault(const Constant(0x5B8DEF))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 

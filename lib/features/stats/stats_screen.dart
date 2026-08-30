@@ -46,6 +46,7 @@ class _StatsViewState extends ConsumerState<StatsView> {
     final totalAsync = ref.watch(totalMinutesBetweenProvider(bounds));
     final activeAsync = ref.watch(activeTasksProvider);
     final byProjectAsync = ref.watch(projectMinutesProvider(bounds));
+    final byCategoryAsync = ref.watch(categoryMinutesProvider(bounds));
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -120,6 +121,25 @@ class _StatsViewState extends ConsumerState<StatsView> {
               ],
             );
           },
+        ),
+        const SizedBox(height: 24),
+        SectionHeader('Tiempo por actividad'),
+        const SizedBox(height: 6),
+        byCategoryAsync.when(
+          loading: () => const LinearProgressIndicator(),
+          error: (e, _) => Text('$e'),
+          data: (entries) => entries.isEmpty
+              ? const Text('Sin actividad categorizada en este periodo')
+              : Column(
+                  children: [
+                    for (final entry in entries.entries)
+                      ListTile(
+                        dense: true,
+                        title: Text(entry.key),
+                        trailing: Text(_hours(entry.value)),
+                      ),
+                  ],
+                ),
         ),
         const SizedBox(height: 96),
       ],
@@ -217,4 +237,34 @@ final projectMinutesProvider =
         for (final e in sorted)
           if (e.value > 0) e.key: e.value,
       };
+    });
+
+final categoryMinutesProvider =
+    FutureProvider.family<Map<String, int>, ({DateTime start, DateTime end})>((
+      ref,
+      range,
+    ) async {
+      final categories = await ref.watch(activityCategoriesProvider.future);
+      final names = {
+        for (final category in categories) category.id: category.name,
+      };
+      final entries = await ref
+          .watch(timeEntryRepositoryProvider)
+          .watchAll()
+          .first;
+      final totals = <String, int>{};
+      for (final entry in entries) {
+        if (entry.categoryId == null ||
+            entry.start.isBefore(range.start) ||
+            entry.start.isAfter(range.end)) {
+          continue;
+        }
+        final name = names[entry.categoryId!];
+        if (name != null) {
+          totals[name] = (totals[name] ?? 0) + (entry.durationMinutes ?? 0);
+        }
+      }
+      return Map.fromEntries(
+        totals.entries.toList()..sort((a, b) => b.value.compareTo(a.value)),
+      );
     });

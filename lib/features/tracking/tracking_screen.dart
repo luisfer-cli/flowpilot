@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
 import '../../core/utils/time_utils.dart';
+import '../../core/utils/id.dart';
 import '../../data/local/database.dart';
 import '../../shared/widgets.dart';
 import '../tasks/task_providers.dart';
@@ -142,7 +143,14 @@ class _TrackingViewState extends ConsumerState<TrackingView> {
           ),
         ),
         const SizedBox(height: 20),
-        SectionHeader('Historial'),
+        SectionHeader(
+          'Historial',
+          trailing: IconButton(
+            icon: const Icon(Icons.category_outlined),
+            tooltip: 'Gestionar categorías',
+            onPressed: _manageCategories,
+          ),
+        ),
         const SizedBox(height: 8),
         entriesAsync.when(
           loading: () => const LinearProgressIndicator(),
@@ -172,34 +180,22 @@ class _TrackingViewState extends ConsumerState<TrackingView> {
   Future<void> _startTimer() async {
     final tasks = await ref.read(taskRepositoryProvider).watchActive().first;
     if (!mounted) return;
-    final selected = await showModalBottomSheet<String>(
-      context: context,
-      builder: (context) => SafeArea(
-        child: tasks.isEmpty
-            ? const Padding(
-                padding: EdgeInsets.all(24),
-                child: Text('No hay tareas activas'),
-              )
-            : ListView(
-                shrinkWrap: true,
-                children: [
-                  const ListTile(title: Text('¿En qué tarea trabajas?')),
-                  for (final t in tasks)
-                    ListTile(
-                      leading: const Icon(Icons.task_alt),
-                      title: Text(
-                        t.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      onTap: () => Navigator.of(context).pop(t.id),
-                    ),
-                ],
-              ),
-      ),
-    );
+    final selected =
+        await showModalBottomSheet<({String taskId, String? categoryId})>(
+          context: context,
+          builder: (context) => SafeArea(
+            child: tasks.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Text('No hay tareas activas'),
+                  )
+                : _StartTrackingSheet(tasks: tasks),
+          ),
+        );
     if (selected == null) return;
-    await ref.read(timeEntryRepositoryProvider).startTimer(taskId: selected);
+    await ref
+        .read(timeEntryRepositoryProvider)
+        .startTimer(taskId: selected.taskId, categoryId: selected.categoryId);
   }
 
   Future<void> _stopTimer(TimeEntry entry) async {
@@ -215,6 +211,7 @@ class _TrackingViewState extends ConsumerState<TrackingView> {
     var start = DateTime(now.year, now.month, now.day, 9);
     var end = start.add(const Duration(hours: 1));
     String? taskId;
+    String? categoryId;
 
     await showDialog<void>(
       context: context,
@@ -252,6 +249,9 @@ class _TrackingViewState extends ConsumerState<TrackingView> {
 
           final tasks =
               ref.watch(activeTasksProvider).valueOrNull ?? const <Task>[];
+          final categories =
+              ref.watch(activityCategoriesProvider).valueOrNull ??
+              const <ActivityCategory>[];
 
           return AlertDialog(
             title: const Text('Añadir tiempo'),
@@ -274,6 +274,23 @@ class _TrackingViewState extends ConsumerState<TrackingView> {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String?>(
+                  initialValue: categoryId,
+                  decoration: const InputDecoration(labelText: 'Categoría'),
+                  items: [
+                    const DropdownMenuItem(
+                      value: null,
+                      child: Text('Sin categoría'),
+                    ),
+                    for (final category in categories)
+                      DropdownMenuItem(
+                        value: category.id,
+                        child: Text(category.name),
+                      ),
+                  ],
+                  onChanged: (v) => setDialogState(() => categoryId = v),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
@@ -307,7 +324,12 @@ class _TrackingViewState extends ConsumerState<TrackingView> {
                 onPressed: () {
                   ref
                       .read(timeEntryRepositoryProvider)
-                      .addManual(start: start, end: end, taskId: taskId);
+                      .addManual(
+                        start: start,
+                        end: end,
+                        taskId: taskId,
+                        categoryId: categoryId,
+                      );
                   Navigator.of(dialogContext).pop();
                 },
                 child: const Text('Guardar'),
@@ -316,6 +338,124 @@ class _TrackingViewState extends ConsumerState<TrackingView> {
           );
         },
       ),
+    );
+  }
+
+  Future<void> _manageCategories() async {
+    final controller = TextEditingController();
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Categorías de actividad'),
+        content: Consumer(
+          builder: (context, ref, _) {
+            final categories =
+                ref.watch(activityCategoriesProvider).valueOrNull ??
+                const <ActivityCategory>[];
+            return SizedBox(
+              width: 360,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final category in categories)
+                    ListTile(
+                      title: Text(category.name),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete_outline),
+                        onPressed: () => ref
+                            .read(activityCategoryRepositoryProvider)
+                            .delete(category.id),
+                      ),
+                    ),
+                  TextField(
+                    controller: controller,
+                    decoration: const InputDecoration(
+                      labelText: 'Nueva categoría',
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cerrar'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              if (controller.text.trim().isNotEmpty) {
+                await ref
+                    .read(activityCategoryRepositoryProvider)
+                    .insert(
+                      ActivityCategoriesCompanion.insert(
+                        id: generateId(),
+                        name: controller.text.trim(),
+                      ),
+                    );
+              }
+              if (dialogContext.mounted) Navigator.pop(dialogContext);
+            },
+            child: const Text('Agregar'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+  }
+}
+
+class _StartTrackingSheet extends ConsumerStatefulWidget {
+  const _StartTrackingSheet({required this.tasks});
+  final List<Task> tasks;
+
+  @override
+  ConsumerState<_StartTrackingSheet> createState() =>
+      _StartTrackingSheetState();
+}
+
+class _StartTrackingSheetState extends ConsumerState<_StartTrackingSheet> {
+  String? _categoryId;
+
+  @override
+  Widget build(BuildContext context) {
+    final categories =
+        ref.watch(activityCategoriesProvider).valueOrNull ??
+        const <ActivityCategory>[];
+    return ListView(
+      shrinkWrap: true,
+      children: [
+        const ListTile(title: Text('¿En qué actividad trabajas?')),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: DropdownButtonFormField<String?>(
+            initialValue: _categoryId,
+            decoration: const InputDecoration(labelText: 'Categoría'),
+            items: [
+              const DropdownMenuItem(value: null, child: Text('Sin categoría')),
+              for (final category in categories)
+                DropdownMenuItem(
+                  value: category.id,
+                  child: Text(category.name),
+                ),
+            ],
+            onChanged: (value) => setState(() => _categoryId = value),
+          ),
+        ),
+        for (final task in widget.tasks)
+          ListTile(
+            leading: const Icon(Icons.task_alt),
+            title: Text(
+              task.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            onTap: () =>
+                Navigator.of(context)
+                    .pop((taskId: task.id, categoryId: _categoryId)),
+          ),
+      ],
     );
   }
 }
@@ -327,6 +467,14 @@ class _EntryTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final categoryName = entry.categoryId == null
+        ? null
+        : ref
+              .watch(activityCategoriesProvider)
+              .valueOrNull
+              ?.where((category) => category.id == entry.categoryId)
+              .firstOrNull
+              ?.name;
     final taskNameAsync = entry.taskId == null
         ? null
         : ref.watch(projectNameForTaskProvider2(entry.taskId!));
@@ -340,7 +488,7 @@ class _EntryTile extends ConsumerWidget {
           color: theme.colorScheme.primary,
         ),
         title: Text(
-          taskNameAsync?.valueOrNull ?? 'Sin tarea',
+          categoryName ?? taskNameAsync?.valueOrNull ?? 'Sin categoría',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),

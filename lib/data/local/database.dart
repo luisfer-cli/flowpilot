@@ -23,7 +23,10 @@ part 'database.g.dart';
     Tasks,
     RecurrenceRules,
     TimeBlocks,
+    ScheduleTemplates,
+    ScheduleTemplateBlocks,
     TimeEntries,
+    ActivityCategories,
     PomodoroSessions,
     Habits,
     HabitCompletions,
@@ -44,11 +47,34 @@ class FlowPilotDatabase extends _$FlowPilotDatabase {
   FlowPilotDatabase.overridden() : super(_openOverride());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.createTable(scheduleTemplates);
+        await m.createTable(scheduleTemplateBlocks);
+      }
+    },
+  );
 
   static LazyDatabase _openOverride() {
     return LazyDatabase(() async {
-      final dbFolder = await getApplicationDocumentsDirectory();
+      Directory dbFolder;
+      try {
+        dbFolder = await getApplicationDocumentsDirectory();
+      } on Object {
+        // Some Linux sessions (containers, minimal WMs, or missing XDG user
+        // dirs) do not provide a documents directory. Keep the app usable by
+        // falling back to a private folder in the user's home directory.
+        final home = Platform.environment['HOME'];
+        dbFolder = Directory(
+          p.join(home ?? Directory.systemTemp.path, '.flowpilot'),
+        );
+        await dbFolder.create(recursive: true);
+      }
       final file = File(p.join(dbFolder.path, 'flowpilot.sqlite'));
       return NativeDatabase.createInBackground(file);
     });

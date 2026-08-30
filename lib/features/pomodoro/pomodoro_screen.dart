@@ -7,8 +7,23 @@ import '../../app/providers.dart';
 import '../../core/utils/time_utils.dart';
 import '../../data/local/database.dart';
 import '../../shared/widgets.dart';
+import '../../shared/module_tabs.dart';
 import '../tasks/task_providers.dart';
+import '../tracking/tracking_screen.dart';
 import 'pomodoro_timer.dart';
+
+class PomodoroModuleScreen extends StatelessWidget {
+  const PomodoroModuleScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) => const ModuleTabHost(
+    title: 'Foco',
+    tabs: [
+      (label: 'Pomodoro', icon: Icons.timer, body: PomodoroView()),
+      (label: 'Tracker', icon: Icons.timelapse, body: TrackingView()),
+    ],
+  );
+}
 
 class PomodoroView extends ConsumerStatefulWidget {
   const PomodoroView({super.key});
@@ -58,6 +73,8 @@ class _PomodoroViewState extends ConsumerState<PomodoroView> {
         _TimerCard(state: state, controller: controller),
         const SizedBox(height: 16),
         _TaskSelector(state: state, controller: controller),
+        const SizedBox(height: 8),
+        _CategorySelector(state: state, controller: controller),
         if (_showConfig) ...[
           const SizedBox(height: 16),
           _ConfigCard(controller: controller),
@@ -339,6 +356,37 @@ class _ConfigCard extends ConsumerWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CategorySelector extends ConsumerWidget {
+  const _CategorySelector({required this.state, required this.controller});
+  final PomodoroState state;
+  final PomodoroController controller;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final categories =
+        ref.watch(activityCategoriesProvider).valueOrNull ??
+        const <ActivityCategory>[];
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        child: DropdownButtonFormField<String?>(
+          initialValue: state.categoryId,
+          decoration: const InputDecoration(
+            labelText: 'Actividad',
+            border: InputBorder.none,
+          ),
+          items: [
+            const DropdownMenuItem(value: null, child: Text('Sin categoría')),
+            for (final category in categories)
+              DropdownMenuItem(value: category.id, child: Text(category.name)),
+          ],
+          onChanged: controller.setCategory,
         ),
       ),
     );

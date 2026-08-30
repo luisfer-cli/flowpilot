@@ -21,29 +21,29 @@ class HomeShell extends StatelessWidget {
         ),
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.today_outlined),
-            selectedIcon: Icon(Icons.today),
-            label: 'Hoy',
-          ),
-          NavigationDestination(
             icon: Icon(Icons.check_circle_outline),
             selectedIcon: Icon(Icons.check_circle),
             label: 'Tareas',
           ),
           NavigationDestination(
-            icon: Icon(Icons.folder_outlined),
-            selectedIcon: Icon(Icons.folder),
-            label: 'Proyectos',
+            icon: Icon(Icons.calendar_today_outlined),
+            selectedIcon: Icon(Icons.calendar_today),
+            label: 'Agenda',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.timer_outlined),
+            selectedIcon: Icon(Icons.timer),
+            label: 'Pomodoro',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.repeat_outlined),
+            selectedIcon: Icon(Icons.repeat),
+            label: 'Rutinas',
           ),
           NavigationDestination(
             icon: Icon(Icons.insights_outlined),
             selectedIcon: Icon(Icons.insights),
-            label: 'Análisis',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.grid_view_outlined),
-            selectedIcon: Icon(Icons.grid_view),
-            label: 'Más',
+            label: 'Reportes',
           ),
         ],
       ),
@@ -57,20 +57,6 @@ class HomeShell extends StatelessWidget {
         onPressed: () => goToTaskEdit(context),
         icon: const Icon(Icons.add),
         label: const Text('Nueva tarea'),
-      );
-    }
-    if (index == 1) {
-      return FloatingActionButton.extended(
-        onPressed: () => goToTaskEdit(context),
-        icon: const Icon(Icons.add),
-        label: const Text('Tarea'),
-      );
-    }
-    if (index == 2) {
-      return FloatingActionButton.extended(
-        onPressed: () => goToProjectEdit(context),
-        icon: const Icon(Icons.add),
-        label: const Text('Proyecto'),
       );
     }
     return const SizedBox.shrink();

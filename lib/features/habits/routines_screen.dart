@@ -57,37 +57,98 @@ class _RoutinesViewState extends ConsumerState<RoutinesView> {
 
   Future<void> _addRoutine(BuildContext context, WidgetRef ref) async {
     final nameCtrl = TextEditingController();
+    var timeOfDayMinutes = 8 * 60;
+    final days = <int>{1, 2, 3, 4, 5};
     await showDialog<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Nueva rutina'),
-        content: TextField(
-          controller: nameCtrl,
-          autofocus: true,
-          decoration: const InputDecoration(hintText: 'Ej: Rutina de mañana'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (nameCtrl.text.trim().isNotEmpty) {
-                ref
-                    .read(routineRepositoryProvider)
-                    .insert(
-                      RoutinesCompanion.insert(
-                        id: generateId(),
-                        name: nameCtrl.text.trim(),
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Nueva rutina programada'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameCtrl,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText: 'Ej: Rutina de mañana',
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  const Expanded(child: Text('Hora de inicio')),
+                  TextButton(
+                    onPressed: () async {
+                      final picked = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay(
+                          hour: timeOfDayMinutes ~/ 60,
+                          minute: timeOfDayMinutes % 60,
+                        ),
+                      );
+                      if (picked != null) {
+                        setDialogState(
+                          () => timeOfDayMinutes =
+                              picked.hour * 60 + picked.minute,
+                        );
+                      }
+                    },
+                    child: Text(
+                      '${(timeOfDayMinutes ~/ 60).toString().padLeft(2, '0')}:${(timeOfDayMinutes % 60).toString().padLeft(2, '0')}',
+                    ),
+                  ),
+                ],
+              ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Días',
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
+              ),
+              Wrap(
+                spacing: 4,
+                children: [
+                  for (var day = 1; day <= 7; day++)
+                    FilterChip(
+                      label: Text(
+                        const ['L', 'M', 'X', 'J', 'V', 'S', 'D'][day - 1],
                       ),
-                    );
-              }
-              Navigator.of(dialogContext).pop();
-            },
-            child: const Text('Guardar'),
+                      selected: days.contains(day),
+                      onSelected: (selected) => setDialogState(
+                        () => selected ? days.add(day) : days.remove(day),
+                      ),
+                    ),
+                ],
+              ),
+            ],
           ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () {
+                if (nameCtrl.text.trim().isNotEmpty) {
+                  ref
+                      .read(routineRepositoryProvider)
+                      .insert(
+                        RoutinesCompanion.insert(
+                          id: generateId(),
+                          name: nameCtrl.text.trim(),
+                          timeOfDayMinutes: Value(timeOfDayMinutes),
+                          daysOfWeekJson: Value(jsonEncode(days.toList())),
+                        ),
+                      );
+                }
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text('Guardar'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -190,6 +251,13 @@ class _RoutineCardState extends ConsumerState<_RoutineCard> {
                   color: theme.colorScheme.outline,
                 ),
               ),
+            if (!_expanded && widget.routine.daysOfWeekJson != null)
+              Text(
+                'Programada · ${_formatTime(widget.routine.timeOfDayMinutes)}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.primary,
+                ),
+              ),
             if (_expanded) ...[
               const Divider(height: 1),
               const SizedBox(height: 4),
@@ -224,6 +292,11 @@ class _RoutineCardState extends ConsumerState<_RoutineCard> {
         ),
       ),
     );
+  }
+
+  String _formatTime(int? minutes) {
+    final value = minutes ?? 0;
+    return '${(value ~/ 60).toString().padLeft(2, '0')}:${(value % 60).toString().padLeft(2, '0')}';
   }
 }
 

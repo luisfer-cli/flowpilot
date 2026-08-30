@@ -1,4 +1,7 @@
 import 'package:drift/drift.dart' show Value;
+
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -10,9 +13,9 @@ import '../../core/utils/id.dart';
 import '../../core/utils/time_utils.dart';
 import '../../data/local/database.dart';
 import '../../shared/widgets.dart';
-import '../ai/what_now_card.dart';
 import '../tasks/task_providers.dart';
 import '../tasks/widgets/task_card.dart';
+import '../habits/routines_screen.dart';
 
 /// Screen showing the calendar: day view (time blocking grid), week agenda
 /// and month view.
@@ -37,8 +40,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         title: Text(formatFullDate(_selectedDate)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.calendar_month_outlined),
-            tooltip: 'Calendario',
+            icon: const Icon(Icons.add_task),
+            tooltip: 'Nueva tarea',
             onPressed: () => goToTaskEdit(context),
           ),
         ],
@@ -163,11 +166,50 @@ class _DayViewState extends ConsumerState<DayView> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const WhatNowCard(),
+        _ScheduledRoutines(date: widget.date),
         Expanded(flex: 3, child: TimeBlockGrid(date: widget.date)),
         Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant),
         Expanded(flex: 2, child: _UnscheduledPanel(date: widget.date)),
       ],
+    );
+  }
+}
+
+class _ScheduledRoutines extends ConsumerWidget {
+  const _ScheduledRoutines({required this.date});
+  final DateTime date;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final routines =
+        ref.watch(routinesProvider).valueOrNull ?? const <Routine>[];
+    final scheduled = routines.where((routine) {
+      if (routine.daysOfWeekJson == null || routine.daysOfWeekJson!.isEmpty) {
+        return false;
+      }
+      try {
+        final days = (jsonDecode(routine.daysOfWeekJson!) as List).cast<int>();
+        return days.contains(date.weekday) && routine.active;
+      } catch (_) {
+        return false;
+      }
+    }).toList();
+    if (scheduled.isEmpty) return const SizedBox.shrink();
+    return Card(
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      child: Column(
+        children: [
+          for (final routine in scheduled)
+            ListTile(
+              dense: true,
+              leading: const Icon(Icons.repeat),
+              title: Text(routine.name),
+              subtitle: Text(
+                '${((routine.timeOfDayMinutes ?? 0) ~/ 60).toString().padLeft(2, '0')}:${((routine.timeOfDayMinutes ?? 0) % 60).toString().padLeft(2, '0')}',
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

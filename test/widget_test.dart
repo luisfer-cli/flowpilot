@@ -23,7 +23,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Hoy'), findsOneWidget);
+    expect(find.text('Tareas'), findsNWidgets(2));
     expect(find.byType(NavigationBar), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());

@@ -12,6 +12,8 @@ import '../data/repositories/project_repository.dart';
 import '../data/repositories/reference_repository.dart';
 import '../data/repositories/task_repository.dart';
 import '../data/repositories/time_block_repository.dart';
+import '../data/repositories/schedule_repository.dart';
+import '../data/repositories/activity_category_repository.dart';
 import '../data/repositories/time_entry_repository.dart';
 
 /// In-memory database provider. Overridden in tests with a memory database.
@@ -26,6 +28,7 @@ final seedProvider = FutureProvider<void>((ref) async {
   final db = ref.watch(databaseProvider);
   await db.customSelect('SELECT 1').getSingle();
   await ReferenceRepository(db).seedIfNeeded();
+  await ActivityCategoryRepository(db).seedIfNeeded();
   await AutomationRepository(db).seedIfNeeded();
 });
 
@@ -43,6 +46,18 @@ final goalRepositoryProvider = Provider<GoalRepository>(
 
 final timeBlockRepositoryProvider = Provider<TimeBlockRepository>(
   (ref) => TimeBlockRepository(ref.watch(databaseProvider)),
+);
+
+final scheduleRepositoryProvider = Provider<ScheduleRepository>(
+  (ref) => ScheduleRepository(ref.watch(databaseProvider)),
+);
+
+final activityCategoryRepositoryProvider = Provider<ActivityCategoryRepository>(
+  (ref) => ActivityCategoryRepository(ref.watch(databaseProvider)),
+);
+
+final activityCategoriesProvider = StreamProvider<List<ActivityCategory>>(
+  (ref) => ref.watch(activityCategoryRepositoryProvider).watchAll(),
 );
 
 final timeEntryRepositoryProvider = Provider<TimeEntryRepository>(

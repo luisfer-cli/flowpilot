@@ -10,6 +10,7 @@ import '../../core/services/notifications_service.dart';
 import '../../core/utils/id.dart';
 import '../../data/local/database.dart';
 import '../../data/repositories/pomodoro_repository.dart';
+import '../../data/repositories/time_entry_repository.dart';
 
 enum PomodoroPhase { focus, shortBreak, longBreak }
 
@@ -59,6 +60,7 @@ class PomodoroState {
     this.isRunning = false,
     this.cycleCount = 0,
     this.taskId,
+    this.categoryId,
   });
 
   final PomodoroPhase phase;
@@ -66,6 +68,7 @@ class PomodoroState {
   final bool isRunning;
   final int cycleCount;
   final String? taskId;
+  final String? categoryId;
 
   int get totalSeconds {
     switch (phase) {
@@ -85,6 +88,7 @@ class PomodoroState {
     int? cycleCount,
     String? taskId,
     bool clearTask = false,
+    String? categoryId,
   }) {
     return PomodoroState(
       phase: phase ?? this.phase,
@@ -92,20 +96,24 @@ class PomodoroState {
       isRunning: isRunning ?? this.isRunning,
       cycleCount: cycleCount ?? this.cycleCount,
       taskId: clearTask ? null : (taskId ?? this.taskId),
+      categoryId: categoryId ?? this.categoryId,
     );
   }
 }
 
 class PomodoroController extends StateNotifier<PomodoroState> {
-  PomodoroController({required this.repo}) : super(const PomodoroState()) {
+  PomodoroController({required this.repo, this.timeRepo})
+    : super(const PomodoroState()) {
     _loadConfig();
   }
 
   final PomodoroRepository repo;
+  final TimeEntryRepository? timeRepo;
   Timer? _ticker;
   PomodoroConfig _config = const PomodoroConfig();
   String? _sessionId;
   DateTime? _sessionStart;
+  String? _trackerEntryId;
 
   /// Optional callback fired when a phase completes (focus or break).
   void Function(PomodoroPhase completed)? onPhaseComplete;
@@ -131,6 +139,10 @@ class PomodoroController extends StateNotifier<PomodoroState> {
     state = state.copyWith(taskId: taskId, clearTask: taskId == null);
   }
 
+  void setCategory(String? categoryId) {
+    state = state.copyWith(categoryId: categoryId);
+  }
+
   void start() {
     if (state.isRunning) return;
     if (state.phase != PomodoroPhase.focus ||
@@ -140,12 +152,14 @@ class PomodoroController extends StateNotifier<PomodoroState> {
     _ticker?.cancel();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
     state = state.copyWith(isRunning: true);
+    if (state.phase == PomodoroPhase.focus) _startTracker();
   }
 
   void pause() {
     _ticker?.cancel();
     _ticker = null;
     state = state.copyWith(isRunning: false);
+    _stopTracker();
   }
 
   void resume() {
@@ -153,12 +167,14 @@ class PomodoroController extends StateNotifier<PomodoroState> {
     _ticker?.cancel();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
     state = state.copyWith(isRunning: true);
+    if (state.phase == PomodoroPhase.focus) _startTracker();
   }
 
   /// Stops the current focus session, saving it as interrupted/abandoned.
   Future<void> stop() async {
     _ticker?.cancel();
     _ticker = null;
+    _stopTracker();
     if (_sessionId != null && state.phase == PomodoroPhase.focus) {
       final elapsed = DateTime.now().difference(_sessionStart!);
       final abandoned = elapsed.inMinutes < (_config.focusMinutes / 2);
@@ -183,6 +199,7 @@ class PomodoroController extends StateNotifier<PomodoroState> {
 
   /// Skips the current phase without saving a completed session.
   Future<void> skip() async {
+    await _stopTracker();
     if (state.phase == PomodoroPhase.focus) {
       await _saveInterrupted();
     }
@@ -208,6 +225,7 @@ class PomodoroController extends StateNotifier<PomodoroState> {
     _ticker?.cancel();
     _ticker = null;
     final completed = state.phase;
+    await _stopTracker();
     if (completed == PomodoroPhase.focus) {
       await _saveCompleted();
       state = state.copyWith(cycleCount: state.cycleCount + 1);
@@ -269,6 +287,21 @@ class PomodoroController extends StateNotifier<PomodoroState> {
     _sessionId = null;
   }
 
+  Future<void> _startTracker() async {
+    if (_trackerEntryId != null || timeRepo == null) return;
+    _trackerEntryId = await timeRepo!.startTimer(
+      taskId: state.taskId,
+      categoryId: state.categoryId,
+      source: 'pomodoro',
+    );
+  }
+
+  Future<void> _stopTracker() async {
+    final id = _trackerEntryId;
+    _trackerEntryId = null;
+    if (id != null && timeRepo != null) await timeRepo!.stopTimer(id);
+  }
+
   @override
   void dispose() {
     _ticker?.cancel();
@@ -280,6 +313,7 @@ final pomodoroControllerProvider =
     StateNotifierProvider<PomodoroController, PomodoroState>((ref) {
       final controller = PomodoroController(
         repo: ref.watch(pomodoroRepositoryProvider),
+        timeRepo: ref.watch(timeEntryRepositoryProvider),
       );
       controller.onPhaseComplete = (phase) {
         SystemSound.play(SystemSoundType.alert);
