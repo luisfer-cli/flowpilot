@@ -177,43 +177,28 @@ class _ReportContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: StatTile(
-                label: 'Completadas',
-                value: '${snapshot.completedTasks}',
-                icon: Icons.check_circle_outline,
-              ),
+        _StatGrid(
+          items: [
+            StatTile(
+              label: 'Completadas',
+              value: '${snapshot.completedTasks}',
+              icon: Icons.check_circle_outline,
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: StatTile(
-                label: 'Pendientes',
-                value: '${snapshot.pendingTasks}',
-                icon: Icons.pending_actions,
-              ),
+            StatTile(
+              label: 'Pendientes',
+              value: '${snapshot.pendingTasks}',
+              icon: Icons.pending_actions,
             ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: StatTile(
-                label: 'Tiempo registrado',
-                value: _hours(snapshot.totalMinutes),
-                icon: Icons.timer_outlined,
-              ),
+            StatTile(
+              label: 'Tiempo registrado',
+              value: _hours(snapshot.totalMinutes),
+              icon: Icons.timer_outlined,
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: StatTile(
-                label: 'Foco',
-                value:
-                    '${_hours(snapshot.focusMinutes)} (${(focusPercent * 100).round()}%)',
-                icon: Icons.center_focus_strong,
-              ),
+            StatTile(
+              label: 'Foco',
+              value:
+                  '${_hours(snapshot.focusMinutes)} (${(focusPercent * 100).round()}%)',
+              icon: Icons.center_focus_strong,
             ),
           ],
         ),
@@ -321,6 +306,29 @@ class _ReportContent extends StatelessWidget {
   static String _signedHours(int minutes) {
     if (minutes == 0) return '0m';
     return minutes > 0 ? '+${_hours(minutes)}' : '-${_hours(-minutes)}';
+  }
+}
+
+class _StatGrid extends StatelessWidget {
+  const _StatGrid({required this.items});
+
+  final List<Widget> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 720 ? 4 : 2;
+        final width = (constraints.maxWidth - (columns - 1) * 10) / columns;
+        return Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            for (final item in items) SizedBox(width: width, child: item),
+          ],
+        );
+      },
+    );
   }
 }
 

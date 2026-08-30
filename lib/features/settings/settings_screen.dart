@@ -57,22 +57,38 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         children: [
           SectionHeader(l10n.appearance),
           const SizedBox(height: 6),
-          SegmentedButton<ThemeMode>(
-            segments: [
-              ButtonSegment(
-                value: ThemeMode.system,
-                label: Text(l10n.themeSystem),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: SizedBox(
+                width: double.infinity,
+                child: SegmentedButton<ThemeMode>(
+                  segments: [
+                    ButtonSegment(
+                      value: ThemeMode.system,
+                      icon: const Icon(Icons.brightness_auto_outlined),
+                      label: Text(l10n.themeSystem),
+                    ),
+                    ButtonSegment(
+                      value: ThemeMode.light,
+                      icon: const Icon(Icons.light_mode_outlined),
+                      label: Text(l10n.themeLight),
+                    ),
+                    ButtonSegment(
+                      value: ThemeMode.dark,
+                      icon: const Icon(Icons.dark_mode_outlined),
+                      label: Text(l10n.themeDark),
+                    ),
+                  ],
+                  selected: {settings.themeMode},
+                  onSelectionChanged: (s) => ref
+                      .read(appSettingsProvider.notifier)
+                      .update(
+                        (current) => current.copyWith(themeMode: s.first),
+                      ),
+                ),
               ),
-              ButtonSegment(
-                value: ThemeMode.light,
-                label: Text(l10n.themeLight),
-              ),
-              ButtonSegment(value: ThemeMode.dark, label: Text(l10n.themeDark)),
-            ],
-            selected: {settings.themeMode},
-            onSelectionChanged: (s) => ref
-                .read(appSettingsProvider.notifier)
-                .update((current) => current.copyWith(themeMode: s.first)),
+            ),
           ),
           const SizedBox(height: 16),
           SectionHeader(l10n.languageAndFormat),
@@ -173,7 +189,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          const SizedBox(height: 24),
           SectionHeader(l10n.about),
           const SizedBox(height: 6),
           Card(
@@ -196,21 +211,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   title: const Text('Exportar tareas (JSON)'),
                   onTap: () => _exportTasks(context, ref),
                 ),
+                const Divider(indent: 16, endIndent: 16),
                 ListTile(
                   leading: const Icon(Icons.table_chart),
                   title: const Text('Exportar CSV'),
                   onTap: () => _exportCsv(context, ref),
                 ),
+                const Divider(indent: 16, endIndent: 16),
                 ListTile(
                   leading: const Icon(Icons.notes),
                   title: const Text('Exportar Markdown'),
                   onTap: () => _exportMarkdown(context, ref),
                 ),
+                const Divider(indent: 16, endIndent: 16),
                 ListTile(
                   leading: const Icon(Icons.event),
                   title: const Text('Exportar calendario (ICS)'),
                   onTap: () => _exportIcs(context, ref),
                 ),
+                const Divider(indent: 16, endIndent: 16),
                 ListTile(
                   leading: const Icon(Icons.archive_outlined),
                   title: const Text('Backup completo (JSON)'),

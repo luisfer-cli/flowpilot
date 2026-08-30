@@ -53,7 +53,9 @@ class TaskCard extends ConsumerWidget {
                               decoration: done
                                   ? TextDecoration.lineThrough
                                   : null,
-                              color: done ? theme.colorScheme.outline : null,
+                              color: done
+                                  ? theme.colorScheme.onSurfaceVariant
+                                  : null,
                             ),
                           ),
                         ),
@@ -76,11 +78,11 @@ class TaskCard extends ConsumerWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.outline,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Wrap(
                       spacing: 6,
                       runSpacing: 4,

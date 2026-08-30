@@ -18,17 +18,49 @@ const Map<int, String> kPriorityLabels = {
   4: 'Urgente',
 };
 
+abstract final class AppSpace {
+  static const xxs = 4.0;
+  static const xs = 8.0;
+  static const sm = 12.0;
+  static const md = 16.0;
+  static const lg = 24.0;
+  static const xl = 32.0;
+}
+
+class AppContent extends StatelessWidget {
+  const AppContent({super.key, required this.child, this.maxWidth = 1120});
+
+  final Widget child;
+  final double maxWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: maxWidth),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
 class EmptyState extends StatelessWidget {
   const EmptyState({
     super.key,
     required this.icon,
     required this.title,
     this.subtitle,
+    this.action,
   });
 
   final IconData icon;
   final String title;
   final String? subtitle;
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +71,7 @@ class EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 56, color: theme.colorScheme.outline),
+            Icon(icon, size: 56, color: theme.colorScheme.onSurfaceVariant),
             const SizedBox(height: 12),
             Text(
               title,
@@ -51,11 +83,12 @@ class EmptyState extends StatelessWidget {
               Text(
                 subtitle!,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.outline,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
                 textAlign: TextAlign.center,
               ),
             ],
+            if (action != null) ...[const SizedBox(height: 16), action!],
           ],
         ),
       ),
@@ -74,11 +107,7 @@ class SectionHeader extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text(
-            title,
-            style: Theme.of(context).textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w700),
-          ),
+          child: Text(title, style: Theme.of(context).textTheme.titleMedium),
         ),
         ?trailing,
       ],
@@ -107,22 +136,35 @@ class StatTile extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, size: 20, color: theme.colorScheme.primary),
+            Container(
+              width: 34,
+              height: 34,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                icon,
+                size: 19,
+                color: theme.colorScheme.onPrimaryContainer,
+              ),
+            ),
             const SizedBox(height: 8),
             Text(
               value,
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w800,
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
             const SizedBox(height: 2),
             Text(
               label,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.outline,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
             ),
           ],
         ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants.dart';
+import '../../app/router.dart';
 import '../../data/local/database.dart';
 import '../../shared/widgets.dart';
 import 'task_providers.dart';
@@ -64,12 +65,17 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                     ),
                   ),
                 if (grouped.isEmpty)
-                  const SliverFillRemaining(
+                  SliverFillRemaining(
                     hasScrollBody: false,
                     child: EmptyState(
                       icon: Icons.task_alt,
                       title: 'Sin tareas',
                       subtitle: 'Toca el botón + para crear una tarea',
+                      action: FilledButton.icon(
+                        onPressed: () => goToTaskEdit(context),
+                        icon: const Icon(Icons.add),
+                        label: const Text('Nueva tarea'),
+                      ),
                     ),
                   )
                 else

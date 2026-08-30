@@ -20,19 +20,19 @@ class AppRouter {
   static const settings = '/settings';
 
   static GoRouter router() => GoRouter(
-    initialLocation: tasks,
+    initialLocation: agenda,
     routes: [
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => HomeShell(navigationShell: shell),
         branches: [
           StatefulShellBranch(
             routes: [
-              GoRoute(path: tasks, builder: (_, _) => const TasksScreen()),
+              GoRoute(path: agenda, builder: (_, _) => const CalendarScreen()),
             ],
           ),
           StatefulShellBranch(
             routes: [
-              GoRoute(path: agenda, builder: (_, _) => const CalendarScreen()),
+              GoRoute(path: tasks, builder: (_, _) => const TasksScreen()),
             ],
           ),
           StatefulShellBranch(

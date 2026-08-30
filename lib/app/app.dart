@@ -8,11 +8,18 @@ import 'router.dart';
 import 'theme.dart';
 import '../core/utils/time_utils.dart';
 
-class FlowPilotApp extends ConsumerWidget {
+class FlowPilotApp extends ConsumerStatefulWidget {
   const FlowPilotApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FlowPilotApp> createState() => _FlowPilotAppState();
+}
+
+class _FlowPilotAppState extends ConsumerState<FlowPilotApp> {
+  late final router = AppRouter.router();
+
+  @override
+  Widget build(BuildContext context) {
     final settings = ref.watch(appSettingsProvider);
     configureTimeFormatting(
       languageCode: settings.languageCode,
@@ -21,8 +28,6 @@ class FlowPilotApp extends ConsumerWidget {
       weekStartsMonday: settings.weekStartsMonday,
     );
     final seed = ref.watch(seedProvider);
-
-    final router = AppRouter.router();
 
     return MaterialApp.router(
       title: 'FlowPilot',
