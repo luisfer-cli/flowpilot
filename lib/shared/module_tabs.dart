@@ -10,11 +10,13 @@ class ModuleTabHost extends StatelessWidget {
     required this.title,
     required this.tabs,
     this.actions,
+    this.showTitle = true,
   });
 
   final String title;
   final List<({String label, IconData icon, Widget body})> tabs;
   final List<Widget>? actions;
+  final bool showTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +24,8 @@ class ModuleTabHost extends StatelessWidget {
       length: tabs.length,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(title),
+          toolbarHeight: showTitle ? kToolbarHeight : 0,
+          title: showTitle ? Text(title) : null,
           actions: actions,
           bottom: TabBar(
             isScrollable: tabs.length > 4,

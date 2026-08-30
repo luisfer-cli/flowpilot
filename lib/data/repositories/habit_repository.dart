@@ -166,5 +166,37 @@ class RoutineRepository {
 
   Future<void> delete(String id) async {
     await (_db.delete(_db.routines)..where((r) => r.id.equals(id))).go();
+    await (_db.delete(
+      _db.routineCompletions,
+    )..where((r) => r.routineId.equals(id))).go();
+  }
+
+  Future<bool> isCompletedOn(String routineId, DateTime date) async {
+    final day = DateTime(date.year, date.month, date.day);
+    return await (_db.select(
+              _db.routineCompletions,
+            )..where((r) => r.routineId.equals(routineId) & r.date.equals(day)))
+            .getSingleOrNull() !=
+        null;
+  }
+
+  Future<void> toggleCompletion(String routineId, DateTime date) async {
+    final day = DateTime(date.year, date.month, date.day);
+    final existing =
+        await (_db.select(
+              _db.routineCompletions,
+            )..where((r) => r.routineId.equals(routineId) & r.date.equals(day)))
+            .getSingleOrNull();
+    if (existing == null) {
+      await _db
+          .into(_db.routineCompletions)
+          .insert(
+            RoutineCompletionsCompanion.insert(routineId: routineId, date: day),
+          );
+    } else {
+      await (_db.delete(
+        _db.routineCompletions,
+      )..where((r) => r.routineId.equals(routineId) & r.date.equals(day))).go();
+    }
   }
 }

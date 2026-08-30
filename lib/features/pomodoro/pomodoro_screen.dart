@@ -18,6 +18,7 @@ class PomodoroModuleScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => const ModuleTabHost(
     title: 'Foco',
+    showTitle: false,
     tabs: [
       (label: 'Pomodoro', icon: Icons.timer, body: PomodoroView()),
       (label: 'Tracker', icon: Icons.timelapse, body: TrackingView()),
@@ -370,8 +371,7 @@ class _CategorySelector extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final categories =
-        ref.watch(activityCategoriesProvider).valueOrNull ??
-        const <ActivityCategory>[];
+        ref.watch(globalCategoriesProvider).valueOrNull ?? const <Category>[];
     return Card(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),

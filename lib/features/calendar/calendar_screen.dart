@@ -16,6 +16,7 @@ import '../../shared/widgets.dart';
 import '../tasks/task_providers.dart';
 import '../tasks/widgets/task_card.dart';
 import '../habits/routines_screen.dart';
+import '../schedules/schedules_screen.dart';
 
 /// Screen showing the calendar: day view (time blocking grid), week agenda
 /// and month view.
@@ -166,8 +167,7 @@ class _DayViewState extends ConsumerState<DayView> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _ScheduledRoutines(date: widget.date),
-        Expanded(flex: 3, child: TimeBlockGrid(date: widget.date)),
+        Expanded(child: TimeBlockGrid(date: widget.date)),
         Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant),
         Expanded(flex: 2, child: _UnscheduledPanel(date: widget.date)),
       ],
@@ -175,6 +175,8 @@ class _DayViewState extends ConsumerState<DayView> {
   }
 }
 
+// Legacy summary widgets kept for compatibility with older deep links.
+// ignore: unused_element
 class _ScheduledRoutines extends ConsumerWidget {
   const _ScheduledRoutines({required this.date});
   final DateTime date;
@@ -205,13 +207,54 @@ class _ScheduledRoutines extends ConsumerWidget {
               leading: const Icon(Icons.repeat),
               title: Text(routine.name),
               subtitle: Text(
-                '${((routine.timeOfDayMinutes ?? 0) ~/ 60).toString().padLeft(2, '0')}:${((routine.timeOfDayMinutes ?? 0) % 60).toString().padLeft(2, '0')}',
+                '${_formatMinutes(routine.timeOfDayMinutes)}–${_formatMinutes(routine.endTimeMinutes)}',
               ),
             ),
         ],
       ),
     );
   }
+
+  String _formatMinutes(int? minutes) {
+    final value = minutes ?? 0;
+    return '${(value ~/ 60).toString().padLeft(2, '0')}:${(value % 60).toString().padLeft(2, '0')}';
+  }
+}
+
+// ignore: unused_element
+class _ScheduledCourses extends ConsumerWidget {
+  const _ScheduledCourses({required this.date});
+  final DateTime date;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final blocks = ref.watch(scheduleBlocksForDayProvider(date.weekday));
+    return blocks.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (items) => items.isEmpty
+          ? const SizedBox.shrink()
+          : Card(
+              margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+              child: Column(
+                children: [
+                  for (final block in items)
+                    ListTile(
+                      dense: true,
+                      leading: const Icon(Icons.school_outlined),
+                      title: Text(block.title),
+                      subtitle: Text(
+                        '${_time(block.startMinutes)}–${_time(block.endMinutes)}',
+                      ),
+                    ),
+                ],
+              ),
+            ),
+    );
+  }
+
+  String _time(int minutes) =>
+      '${(minutes ~/ 60).toString().padLeft(2, '0')}:${(minutes % 60).toString().padLeft(2, '0')}';
 }
 
 class _UnscheduledPanel extends ConsumerWidget {
@@ -230,9 +273,7 @@ class _UnscheduledPanel extends ConsumerWidget {
           EmptyState(icon: Icons.error_outline, title: 'Error', subtitle: '$e'),
       data: (tasks) {
         final active = tasks
-            .where(
-              (t) => t.status != kStatusDone && t.status != kStatusCancelled,
-            )
+            .where((t) => t.status != kStatusCompleted)
             .toList();
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -283,6 +324,8 @@ class TimeBlockGrid extends ConsumerStatefulWidget {
 
 const double _pxPerMinute = 0.72;
 const int _snapMinutes = 15;
+const double _gridHourInset = 8;
+const double _gridBlockInset = 7;
 
 class _TimeBlockGridState extends ConsumerState<TimeBlockGrid> {
   final ScrollController _scroll = ScrollController(
@@ -297,50 +340,83 @@ class _TimeBlockGridState extends ConsumerState<TimeBlockGrid> {
 
   @override
   Widget build(BuildContext context) {
-    final blocksAsync = ref.watch(blocksForDayProvider(dayKey(widget.date)));
+    final blocksAsync = ref.watch(agendaItemsProvider(widget.date));
 
     return blocksAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) =>
           EmptyState(icon: Icons.error_outline, title: 'Error', subtitle: '$e'),
-      data: (blocks) {
+      data: (items) {
+        final manualBlocks = [
+          for (final item in items)
+            if (item.manualBlock != null) item.manualBlock!,
+        ];
         return Scrollbar(
           controller: _scroll,
           child: SingleChildScrollView(
             controller: _scroll,
             child: SizedBox(
-              height: 24 * 60 * _pxPerMinute,
+              height: _gridHourInset + 24 * 60 * _pxPerMinute,
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   return GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onLongPressStart: (details) =>
-                        _createBlockAt(details.localPosition.dy, blocks),
+                        _createBlockAt(details.localPosition.dy, manualBlocks),
                     child: Stack(
                       clipBehavior: Clip.none,
                       children: [
                         _hourLines(constraints.maxWidth),
-                        for (final block in blocks)
+                        for (final item in items)
                           Positioned(
-                            left: 8,
-                            right: 8,
-                            top: block.startMinutes * _pxPerMinute,
-                            height:
-                                (block.endMinutes - block.startMinutes) *
-                                _pxPerMinute,
-                            child: _DraggableBlock(
-                              block: block,
-                              onMove: (deltaMin) => _moveBlock(block, deltaMin),
-                              onResize: (deltaMin) =>
-                                  _resizeBlock(block, deltaMin),
-                              onTap: () => _editBlock(block),
-                              onDelete: () => _deleteBlock(block),
+                            left: _blockLeft(item, items, constraints.maxWidth),
+                            width: _blockWidth(
+                              item,
+                              items,
+                              constraints.maxWidth,
                             ),
+                            top:
+                                _gridHourInset +
+                                _gridBlockInset +
+                                item.startMinutes * _pxPerMinute,
+                            height:
+                                (item.endMinutes - item.startMinutes) *
+                                _pxPerMinute,
+                            child: item.manualBlock == null
+                                ? _AgendaBlock(item: item)
+                                : _DraggableBlock(
+                                    block: item.manualBlock!,
+                                    onMove: (deltaMin) =>
+                                        _moveBlock(item.manualBlock!, deltaMin),
+                                    onResize: (deltaMin) => _resizeBlock(
+                                      item.manualBlock!,
+                                      deltaMin,
+                                    ),
+                                    onTap: () => _editBlock(item.manualBlock!),
+                                    onDelete: () =>
+                                        _deleteBlock(item.manualBlock!),
+                                  ),
                           ),
-                        if (blocks.isEmpty)
+                        if (items.isEmpty)
                           const Center(
                             child: Text(
                               'Mantén pulsado para crear un bloque de tiempo',
+                            ),
+                          ),
+                        if (isSameDay(widget.date, DateTime.now()))
+                          Positioned(
+                            top:
+                                _gridHourInset +
+                                (DateTime.now().hour * 60 +
+                                        DateTime.now().minute) *
+                                    _pxPerMinute,
+                            left: 46,
+                            right: 0,
+                            child: IgnorePointer(
+                              child: Container(
+                                height: 2,
+                                color: Theme.of(context).colorScheme.error,
+                              ),
                             ),
                           ),
                       ],
@@ -355,11 +431,35 @@ class _TimeBlockGridState extends ConsumerState<TimeBlockGrid> {
     );
   }
 
+  double _blockLeft(AgendaItem item, List<AgendaItem> items, double width) {
+    final overlaps = items
+        .where(
+          (other) =>
+              other.startMinutes < item.endMinutes &&
+              other.endMinutes > item.startMinutes,
+        )
+        .toList();
+    final index = overlaps.indexOf(item);
+    final columnWidth = (width - 54) / overlaps.length;
+    return 46 + (index * columnWidth);
+  }
+
+  double _blockWidth(AgendaItem item, List<AgendaItem> items, double width) {
+    final overlaps = items
+        .where(
+          (other) =>
+              other.startMinutes < item.endMinutes &&
+              other.endMinutes > item.startMinutes,
+        )
+        .length;
+    return (width - 54) / overlaps - 8;
+  }
+
   Widget _hourLines(double width) {
     final theme = Theme.of(context);
     final children = <Widget>[];
     for (var h = 0; h < 24; h++) {
-      final top = h * 60 * _pxPerMinute;
+      final top = _gridHourInset + h * 60 * _pxPerMinute;
       children.add(
         Positioned(
           left: 0,
@@ -396,7 +496,11 @@ class _TimeBlockGridState extends ConsumerState<TimeBlockGrid> {
   }
 
   Future<void> _createBlockAt(double dy, List<TimeBlock> blocks) async {
-    final start = (_snapDown((dy / _pxPerMinute).round()));
+    final minutes = ((dy - _gridHourInset) / _pxPerMinute).round().clamp(
+      0,
+      24 * 60,
+    );
+    final start = _snapDown(minutes);
     var end = start + 30;
     // Avoid overlapping: if a block occupies this slot, place after it.
     for (final b in blocks) {
@@ -481,6 +585,89 @@ class _TimeBlockGridState extends ConsumerState<TimeBlockGrid> {
   }
 
   int _snapDown(int minutes) => minutes - (minutes % _snapMinutes);
+}
+
+class _AgendaBlock extends ConsumerWidget {
+  const _AgendaBlock({required this.item});
+  final AgendaItem item;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final color = item.color ?? Theme.of(context).colorScheme.primary;
+    final completed = item.routineId == null
+        ? false
+        : ref
+                  .watch(
+                    routineCompletionProvider((
+                      routineId: item.routineId!,
+                      date: item.routineDate!,
+                    )),
+                  )
+                  .valueOrNull ??
+              false;
+    return Material(
+      color: color.withValues(alpha: completed ? 0.25 : 0.14),
+      child: InkWell(
+        onTap: item.routineId != null
+            ? () async {
+                await ref
+                    .read(routineRepositoryProvider)
+                    .toggleCompletion(item.routineId!, item.routineDate!);
+                ref.invalidate(
+                  routineCompletionProvider((
+                    routineId: item.routineId!,
+                    date: item.routineDate!,
+                  )),
+                );
+              }
+            : item.taskId == null
+            ? null
+            : () => goToTaskEdit(context, id: item.taskId),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            border: Border(
+              left: BorderSide(color: color, width: 4),
+              top: BorderSide(color: color, width: 1.2),
+              bottom: BorderSide(
+                color: color.withValues(alpha: 0.55),
+                width: 1,
+              ),
+            ),
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxHeight < 48;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    item.title,
+                    maxLines: compact ? 1 : 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: color,
+                      fontWeight: FontWeight.w700,
+                      fontSize: compact ? 11 : 13,
+                    ),
+                  ),
+                  if (!compact && item.subtitle != null)
+                    Text(
+                      item.subtitle!,
+                      style: TextStyle(
+                        color: color.withValues(alpha: 0.85),
+                        fontSize: 11,
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _DraggableBlock extends StatelessWidget {
@@ -883,3 +1070,150 @@ class _MonthView extends ConsumerWidget {
 final blocksForDayProvider = StreamProvider.family<List<TimeBlock>, int>(
   (ref, day) => ref.watch(timeBlockRepositoryProvider).watchByDay(day),
 );
+
+class AgendaItem {
+  const AgendaItem({
+    required this.startMinutes,
+    required this.endMinutes,
+    required this.title,
+    required this.source,
+    this.subtitle,
+    this.manualBlock,
+    this.taskId,
+    this.color,
+    this.categoryId,
+    this.routineId,
+    this.routineDate,
+  });
+
+  final int startMinutes;
+  final int endMinutes;
+  final String title;
+  final String source;
+  final String? subtitle;
+  final TimeBlock? manualBlock;
+  final String? taskId;
+  final Color? color;
+  final String? categoryId;
+  final String? routineId;
+  final DateTime? routineDate;
+}
+
+final agendaItemsProvider = FutureProvider.family<List<AgendaItem>, DateTime>((
+  ref,
+  date,
+) async {
+  final items = <AgendaItem>[];
+  final categories = await ref.watch(globalCategoriesProvider.future);
+  Color? categoryColor(String? id) {
+    if (id == null) return null;
+    final category = categories.where((c) => c.id == id).firstOrNull;
+    return category == null ? null : Color(category.color);
+  }
+
+  final manual = await ref
+      .watch(timeBlockRepositoryProvider)
+      .getByDay(dayKey(date));
+  items.addAll(
+    manual.map(
+      (block) => AgendaItem(
+        startMinutes: block.startMinutes,
+        endMinutes: block.endMinutes,
+        title: block.title?.isNotEmpty == true ? block.title! : 'Bloque',
+        source: 'manual',
+        subtitle: _agendaTime(block.startMinutes, block.endMinutes),
+        manualBlock: block,
+      ),
+    ),
+  );
+
+  final scheduled = await ref.watch(
+    scheduleBlocksForDayProvider(date.weekday).future,
+  );
+  items.addAll(
+    scheduled.map(
+      (block) => AgendaItem(
+        startMinutes: block.startMinutes,
+        endMinutes: block.endMinutes,
+        title: block.title,
+        source: 'schedule',
+        subtitle: 'Horario semanal',
+        categoryId: block.categoryId,
+        color: categoryColor(block.categoryId),
+      ),
+    ),
+  );
+
+  final routines = await ref.watch(routinesProvider.future);
+  for (final routine in routines) {
+    if (!routine.active ||
+        routine.timeOfDayMinutes == null ||
+        routine.endTimeMinutes == null) {
+      continue;
+    }
+    final days = _routineDays(routine.daysOfWeekJson);
+    if (!days.contains(date.weekday)) continue;
+    items.add(
+      AgendaItem(
+        startMinutes: routine.timeOfDayMinutes!,
+        endMinutes: routine.endTimeMinutes!,
+        title: routine.name,
+        source: 'routine',
+        subtitle: 'Rutina',
+        categoryId: routine.categoryId,
+        routineId: routine.id,
+        routineDate: date,
+        color: categoryColor(routine.categoryId),
+      ),
+    );
+  }
+
+  final tasks = await ref.watch(tasksForDayProvider(date).future);
+  for (final task in tasks) {
+    final due = task.dueDate;
+    if (due == null || (due.hour == 0 && due.minute == 0)) continue;
+    final start = due.hour * 60 + due.minute;
+    items.add(
+      AgendaItem(
+        startMinutes: start,
+        endMinutes: (start + (task.estimatedMinutes ?? 30)).clamp(
+          start + 15,
+          24 * 60,
+        ),
+        title: task.title,
+        source: 'task',
+        subtitle: 'Tarea',
+        taskId: task.id,
+        categoryId: task.categoryId,
+        color: categoryColor(task.categoryId) ?? Colors.orange,
+      ),
+    );
+  }
+  items.sort((a, b) => a.startMinutes.compareTo(b.startMinutes));
+  return items;
+});
+
+List<int> _routineDays(String? json) {
+  if (json == null || json.isEmpty) return const [];
+  try {
+    return (jsonDecode(json) as List).cast<int>();
+  } catch (_) {
+    return const [];
+  }
+}
+
+String _agendaTime(int start, int end) =>
+    '${_agendaClock(start)}–${_agendaClock(end)}';
+
+String _agendaClock(int value) =>
+    '${(value ~/ 60).toString().padLeft(2, '0')}:${(value % 60).toString().padLeft(2, '0')}';
+
+final routineCompletionProvider =
+    FutureProvider.family<bool, ({String routineId, DateTime date})>((
+      ref,
+      key,
+    ) {
+      return ref
+          .watch(routineRepositoryProvider)
+          .isCompletedOn(key.routineId, key.date);
+    });

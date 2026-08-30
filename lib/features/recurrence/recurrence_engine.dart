@@ -104,7 +104,7 @@ class RecurrenceService {
             id: Value(newId),
             title: Value(task.title),
             description: Value(task.description),
-            status: const Value('Inbox'),
+            status: const Value(kStatusPending),
             priority: Value(task.priority),
             contextId: Value(task.contextId),
             categoryId: Value(task.categoryId),

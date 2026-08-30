@@ -20,8 +20,32 @@ class ScheduleRepository {
   Future<void> insertTemplate(ScheduleTemplatesCompanion template) =>
       _db.into(_db.scheduleTemplates).insert(template);
 
+  Future<void> updateTemplate(
+    String id,
+    ScheduleTemplatesCompanion template,
+  ) async {
+    await (_db.update(
+      _db.scheduleTemplates,
+    )..where((t) => t.id.equals(id))).write(template);
+  }
+
+  Stream<List<ScheduleTemplateBlock>> watchBlocks(String templateId) =>
+      (_db.select(_db.scheduleTemplateBlocks)
+            ..where((b) => b.templateId.equals(templateId))
+            ..orderBy([
+              (b) => OrderingTerm(expression: b.weekday),
+              (b) => OrderingTerm(expression: b.startMinutes),
+            ]))
+          .watch();
+
   Future<void> insertBlock(ScheduleTemplateBlocksCompanion block) =>
       _db.into(_db.scheduleTemplateBlocks).insert(block);
+
+  Future<void> deleteBlock(String id) async {
+    await (_db.delete(
+      _db.scheduleTemplateBlocks,
+    )..where((b) => b.id.equals(id))).go();
+  }
 
   Future<void> deleteTemplate(String id) async {
     await (_db.delete(

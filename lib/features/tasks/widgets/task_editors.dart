@@ -152,11 +152,11 @@ class SubtaskEditor extends ConsumerWidget {
                       CheckboxListTile(
                         dense: true,
                         contentPadding: EdgeInsets.zero,
-                        value: sub.status == kStatusDone,
+                        value: sub.status == kStatusCompleted,
                         title: Text(
                           sub.title,
                           style: TextStyle(
-                            decoration: sub.status == kStatusDone
+                            decoration: sub.status == kStatusCompleted
                                 ? TextDecoration.lineThrough
                                 : null,
                           ),
@@ -171,7 +171,7 @@ class SubtaskEditor extends ConsumerWidget {
                               .read(taskRepositoryProvider)
                               .complete(
                                 sub.id,
-                                done: sub.status != kStatusDone,
+                                done: sub.status != kStatusCompleted,
                               );
                         },
                       ),
@@ -211,7 +211,7 @@ class _AddSubtaskState extends ConsumerState<_AddSubtask> {
           TasksCompanion.insert(
             id: generateId(),
             title: text,
-            status: const Value('Inbox'),
+            status: const Value(kStatusPending),
             parentId: Value(widget.parentId),
           ),
         );

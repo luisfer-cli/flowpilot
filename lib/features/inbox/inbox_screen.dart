@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
 import '../../core/utils/id.dart';
+import '../../core/constants.dart';
 import '../../data/local/database.dart';
 import '../../shared/widgets.dart';
 import '../ai/ai_service.dart';
@@ -65,7 +66,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen> {
             priority: Value(task.priority),
             notes: Value(task.notes),
             dueDate: Value(due),
-            status: const Value('Inbox'),
+            status: const Value(kStatusPending),
           ),
         );
     if (!mounted) return;

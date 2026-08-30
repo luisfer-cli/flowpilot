@@ -12,6 +12,7 @@ class WellbeingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return const ModuleTabHost(
       title: 'Bienestar',
+      showTitle: false,
       tabs: [
         (label: 'Energía', icon: Icons.bolt, body: EnergyView()),
         (label: 'Descansos', icon: Icons.self_improvement, body: BreaksView()),

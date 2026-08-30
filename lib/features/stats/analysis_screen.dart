@@ -11,6 +11,7 @@ class AnalysisScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return const ModuleTabHost(
       title: 'Reportes',
+      showTitle: false,
       tabs: [(label: 'Resumen', icon: Icons.insights, body: StatsView())],
     );
   }

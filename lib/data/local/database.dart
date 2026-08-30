@@ -31,6 +31,7 @@ part 'database.g.dart';
     Habits,
     HabitCompletions,
     Routines,
+    RoutineCompletions,
     CalendarEvents,
     Reminders,
     Notes,
@@ -47,7 +48,7 @@ class FlowPilotDatabase extends _$FlowPilotDatabase {
   FlowPilotDatabase.overridden() : super(_openOverride());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -56,6 +57,47 @@ class FlowPilotDatabase extends _$FlowPilotDatabase {
       if (from < 2) {
         await m.createTable(scheduleTemplates);
         await m.createTable(scheduleTemplateBlocks);
+      }
+      if (from < 3) {
+        await m.addColumn(routines, routines.endTimeMinutes);
+        await m.addColumn(routines, routines.categoryId);
+        await customStatement('''
+          INSERT OR IGNORE INTO categories (id, name)
+          SELECT id, name FROM activity_categories
+        ''');
+        await customStatement('''
+          UPDATE time_entries SET category_id = category_id
+          WHERE category_id IS NOT NULL
+        ''');
+      }
+      if (from < 4) {
+        await m.addColumn(scheduleTemplates, scheduleTemplates.categoryId);
+      }
+      if (from < 5) {
+        await customStatement('''
+          UPDATE tasks
+          SET status = 'Pendiente', is_archived = 1
+          WHERE status = 'Cancelled'
+        ''');
+        await customStatement('''
+          UPDATE tasks
+          SET status = CASE
+            WHEN status IN ('Next', 'In Progress') THEN 'En curso'
+            WHEN status = 'Done' THEN 'Completada'
+            ELSE 'Pendiente'
+          END
+          WHERE is_archived = 0
+        ''');
+        await customStatement('DELETE FROM task_statuses');
+        await customStatement('''
+          INSERT INTO task_statuses (name, order_index, color)
+          VALUES ('Pendiente', 0, 0x9AA5B1),
+                 ('En curso', 1, 0x9AA5B1),
+                 ('Completada', 2, 0x9AA5B1)
+        ''');
+      }
+      if (from < 6) {
+        await m.createTable(routineCompletions);
       }
     },
   );

@@ -70,13 +70,14 @@ class GoalRepository {
     if (tasks.isEmpty) return 0;
     var done = 0;
     for (final t in tasks) {
-      if (t.status == kStatusDone) {
+      if (t.status == kStatusCompleted) {
         done++;
       } else {
         final subs = await (_db.select(
           _db.tasks,
         )..where((s) => s.parentId.equals(t.id))).get();
-        if (subs.isNotEmpty && subs.every((s) => s.status == kStatusDone)) {
+        if (subs.isNotEmpty &&
+            subs.every((s) => s.status == kStatusCompleted)) {
           done++;
         }
       }

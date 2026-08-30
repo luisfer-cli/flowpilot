@@ -12,6 +12,7 @@ class FocusScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return const ModuleTabHost(
       title: 'Focus',
+      showTitle: false,
       tabs: [
         (label: 'Pomodoro', icon: Icons.timer, body: PomodoroView()),
         (label: 'Tracking', icon: Icons.timeline, body: TrackingView()),

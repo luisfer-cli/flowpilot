@@ -5,9 +5,9 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../app/providers.dart';
 import '../../core/utils/time_utils.dart';
+import '../../core/constants.dart';
 import '../../data/local/database.dart';
 import '../../shared/widgets.dart';
-import '../tasks/task_providers.dart';
 import 'settings_service.dart';
 
 final settingsServiceProvider = Provider<SettingsService>(
@@ -178,12 +178,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   title: const Text('Backup completo (JSON)'),
                   onTap: () => _exportBackup(context, ref),
                 ),
-                ListTile(
-                  leading: const Icon(Icons.category),
-                  title: const Text('Estados de tarea'),
-                  subtitle: const Text('Inbox, Backlog, Next…'),
-                  onTap: () => _showStatuses(context, ref),
-                ),
               ],
             ),
           ),
@@ -235,7 +229,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final tasks = await ref.read(taskRepositoryProvider).watchAll().first;
     final buffer = StringBuffer('# FlowPilot - Tareas\n\n');
     for (final t in tasks) {
-      buffer.write('- [${t.status == 'Done' ? 'x' : ' '}] **${t.title}**');
+      buffer.write(
+        '- [${t.status == kStatusCompleted ? 'x' : ' '}] **${t.title}**',
+      );
       if (t.dueDate != null) buffer.write(' (vence ${formatDate(t.dueDate!)})');
       buffer.write('\n');
     }
@@ -326,36 +322,4 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   String _esc(String s) => s.replaceAll('"', '\\"');
 
   List<int> _utf8(String s) => s.codeUnits;
-
-  void _showStatuses(BuildContext context, WidgetRef ref) {
-    final statuses =
-        ref.watch(statusesProvider).valueOrNull ?? const <TaskStatus>[];
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Estados de tarea'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView(
-            shrinkWrap: true,
-            children: [
-              for (final s in statuses)
-                ListTile(
-                  dense: true,
-                  leading: const Icon(Icons.radio_button_unchecked),
-                  title: Text(s.name),
-                  subtitle: Text('Orden ${s.orderIndex}'),
-                ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cerrar'),
-          ),
-        ],
-      ),
-    );
-  }
 }

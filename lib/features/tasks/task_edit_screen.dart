@@ -39,7 +39,6 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
   DateTime? _start;
   DateTime? _due;
   int? _estimatedMinutes;
-  final Set<String> _selectedTags = {};
 
   // Recurrence
   bool _recurring = false;
@@ -61,7 +60,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
     final id = widget.taskId;
     if (id == null) {
       setState(() {
-        _status = 'Inbox';
+        _status = kStatusPending;
         _loading = false;
       });
       return;
@@ -71,9 +70,6 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
       setState(() => _loading = false);
       return;
     }
-    final tags = await ref
-        .read(referenceRepositoryProvider)
-        .tagIdsForTask(task.id);
     setState(() {
       _currentTask = task;
       _title.text = task.title;
@@ -83,7 +79,9 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
           ? ''
           : formatDate(task.startDate!);
       _dueDate.text = task.dueDate == null ? '' : formatDate(task.dueDate!);
-      _status = task.status;
+      _status = kDefaultStatuses.contains(task.status)
+          ? task.status
+          : kStatusPending;
       _priority = task.priority;
       _contextId = task.contextId;
       _categoryId = task.categoryId;
@@ -95,7 +93,6 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
       _start = task.startDate;
       _due = task.dueDate;
       _estimatedMinutes = task.estimatedMinutes;
-      _selectedTags.addAll(tags);
       if (task.recurrenceId != null) {
         _recurring = true;
       }
@@ -165,7 +162,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
       description: Value(
         _description.text.trim().isEmpty ? null : _description.text.trim(),
       ),
-      status: Value(_status ?? 'Inbox'),
+      status: Value(_status ?? kStatusPending),
       priority: Value(_priority),
       contextId: Value(_contextId),
       categoryId: Value(_categoryId),
@@ -178,6 +175,11 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
       energyRequired: Value(_energy),
       focusRequired: Value(_focus),
       recurrenceId: Value(recurrenceId),
+      completedAt: Value(
+        _status == kStatusCompleted
+            ? (_currentTask?.completedAt ?? DateTime.now())
+            : null,
+      ),
     );
 
     final String taskId;
@@ -188,10 +190,6 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
       taskId = widget.taskId!;
       await taskRepo.update(taskId, companion);
     }
-    await ref
-        .read(referenceRepositoryProvider)
-        .setTaskTags(taskId, _selectedTags.toList());
-
     if (mounted) context.pop();
   }
 
@@ -207,7 +205,10 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
         final tomorrow = DateTime.now().add(const Duration(days: 1));
         await taskRepo.update(
           task.id,
-          TasksCompanion(dueDate: Value(tomorrow), status: const Value('Next')),
+          TasksCompanion(
+            dueDate: Value(tomorrow),
+            status: const Value(kStatusInProgress),
+          ),
         );
         if (mounted) context.pop();
       case 'reschedule':
@@ -247,7 +248,10 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
         .read(taskRepositoryProvider)
         .update(
           task.id,
-          TasksCompanion(dueDate: Value(when), status: const Value('Next')),
+          TasksCompanion(
+            dueDate: Value(when),
+            status: const Value(kStatusInProgress),
+          ),
         );
     if (mounted) context.pop();
   }
@@ -290,6 +294,10 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                     hintText: '¿Qué hay que hacer?',
                   ),
                 ),
+                const SizedBox(height: 12),
+                _categoryDropdown(),
+                const SizedBox(height: 12),
+                _statusDropdown(),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _description,
@@ -400,6 +408,40 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
             ),
         ],
       ),
+    );
+  }
+
+  Widget _categoryDropdown() {
+    final categories =
+        ref.watch(globalCategoriesProvider).valueOrNull ?? const <Category>[];
+    return DropdownButtonFormField<String?>(
+      initialValue: _categoryId,
+      decoration: const InputDecoration(labelText: 'Categoría'),
+      items: [
+        const DropdownMenuItem(value: null, child: Text('Sin categoría')),
+        for (final category in categories)
+          DropdownMenuItem(value: category.id, child: Text(category.name)),
+      ],
+      onChanged: (value) => setState(() => _categoryId = value),
+    );
+  }
+
+  Widget _statusDropdown() {
+    return DropdownButtonFormField<String>(
+      initialValue: _status ?? kStatusPending,
+      decoration: const InputDecoration(labelText: 'Estado'),
+      items: const [
+        DropdownMenuItem(value: kStatusPending, child: Text(kStatusPending)),
+        DropdownMenuItem(
+          value: kStatusInProgress,
+          child: Text(kStatusInProgress),
+        ),
+        DropdownMenuItem(
+          value: kStatusCompleted,
+          child: Text(kStatusCompleted),
+        ),
+      ],
+      onChanged: (value) => setState(() => _status = value),
     );
   }
 

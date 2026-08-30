@@ -44,6 +44,21 @@ class ReferenceRepository {
           ),
         );
       }
+      for (final category in const [
+        'Trabajo',
+        'Universidad',
+        'Personal',
+        'Salud',
+        'Pasatiempo',
+      ]) {
+        b.insert(
+          _db.categories,
+          CategoriesCompanion.insert(
+            id: category.toLowerCase(),
+            name: category,
+          ),
+        );
+      }
     });
   }
 

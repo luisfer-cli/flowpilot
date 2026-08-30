@@ -64,9 +64,7 @@ final detectedProblemsProvider =
       final issues = <({String severity, String title, String detail})>[];
       final tasks = await ref.watch(taskRepositoryProvider).watchAll().first;
       final now = DateTime.now();
-      final active = tasks
-          .where((t) => t.status != kStatusDone && t.status != kStatusCancelled)
-          .toList();
+      final active = tasks.where((t) => t.status != kStatusCompleted).toList();
 
       // Overdue tasks
       final overdue = active
@@ -121,7 +119,7 @@ final detectedProblemsProvider =
 
       // Recurring backlog
       final recurring = tasks
-          .where((t) => t.recurrenceId != null && t.status == kStatusDone)
+          .where((t) => t.recurrenceId != null && t.status == kStatusCompleted)
           .length;
       if (recurring > 0) {
         issues.add((

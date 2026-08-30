@@ -32,7 +32,6 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     final countsAsync = ref.watch(countsByStatusProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Tareas')),
       body: RefreshIndicator(
         onRefresh: () async {},
         child: statusesAsync.when(
@@ -179,6 +178,5 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     ];
   }
 
-  bool _isTerminal(String status) =>
-      status == kStatusDone || status == kStatusCancelled;
+  bool _isTerminal(String status) => status == kStatusCompleted;
 }

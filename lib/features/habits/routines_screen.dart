@@ -58,7 +58,11 @@ class _RoutinesViewState extends ConsumerState<RoutinesView> {
   Future<void> _addRoutine(BuildContext context, WidgetRef ref) async {
     final nameCtrl = TextEditingController();
     var timeOfDayMinutes = 8 * 60;
+    var endTimeMinutes = 9 * 60;
+    String? categoryId;
     final days = <int>{1, 2, 3, 4, 5};
+    final categories =
+        ref.read(globalCategoriesProvider).valueOrNull ?? const <Category>[];
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
@@ -100,6 +104,47 @@ class _RoutinesViewState extends ConsumerState<RoutinesView> {
                   ),
                 ],
               ),
+              Row(
+                children: [
+                  const Expanded(child: Text('Hora de término')),
+                  TextButton(
+                    onPressed: () async {
+                      final picked = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay(
+                          hour: endTimeMinutes ~/ 60,
+                          minute: endTimeMinutes % 60,
+                        ),
+                      );
+                      if (picked != null) {
+                        setDialogState(
+                          () =>
+                              endTimeMinutes = picked.hour * 60 + picked.minute,
+                        );
+                      }
+                    },
+                    child: Text(
+                      '${(endTimeMinutes ~/ 60).toString().padLeft(2, '0')}:${(endTimeMinutes % 60).toString().padLeft(2, '0')}',
+                    ),
+                  ),
+                ],
+              ),
+              DropdownButtonFormField<String?>(
+                initialValue: categoryId,
+                decoration: const InputDecoration(labelText: 'Categoría'),
+                items: [
+                  const DropdownMenuItem(
+                    value: null,
+                    child: Text('Sin categoría'),
+                  ),
+                  for (final category in categories)
+                    DropdownMenuItem(
+                      value: category.id,
+                      child: Text(category.name),
+                    ),
+                ],
+                onChanged: (value) => setDialogState(() => categoryId = value),
+              ),
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
@@ -131,7 +176,8 @@ class _RoutinesViewState extends ConsumerState<RoutinesView> {
             ),
             FilledButton(
               onPressed: () {
-                if (nameCtrl.text.trim().isNotEmpty) {
+                if (nameCtrl.text.trim().isNotEmpty &&
+                    endTimeMinutes > timeOfDayMinutes) {
                   ref
                       .read(routineRepositoryProvider)
                       .insert(
@@ -139,7 +185,9 @@ class _RoutinesViewState extends ConsumerState<RoutinesView> {
                           id: generateId(),
                           name: nameCtrl.text.trim(),
                           timeOfDayMinutes: Value(timeOfDayMinutes),
+                          endTimeMinutes: Value(endTimeMinutes),
                           daysOfWeekJson: Value(jsonEncode(days.toList())),
+                          categoryId: Value(categoryId),
                         ),
                       );
                 }
@@ -253,7 +301,7 @@ class _RoutineCardState extends ConsumerState<_RoutineCard> {
               ),
             if (!_expanded && widget.routine.daysOfWeekJson != null)
               Text(
-                'Programada · ${_formatTime(widget.routine.timeOfDayMinutes)}',
+                'Programada · ${_formatTime(widget.routine.timeOfDayMinutes)}–${_formatTime(widget.routine.endTimeMinutes)}',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.primary,
                 ),

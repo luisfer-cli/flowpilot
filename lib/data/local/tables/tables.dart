@@ -86,7 +86,7 @@ class Tasks extends Table {
   TextColumn get id => text()();
   TextColumn get title => text()();
   TextColumn get description => text().nullable()();
-  TextColumn get status => text().withDefault(const Constant('Inbox'))();
+  TextColumn get status => text().withDefault(const Constant('Pendiente'))();
   IntColumn get priority => integer().withDefault(const Constant(0))();
   TextColumn get contextId => text().nullable()();
   TextColumn get categoryId => text().nullable()();
@@ -141,6 +141,7 @@ class TimeBlocks extends Table {
 class ScheduleTemplates extends Table {
   TextColumn get id => text()();
   TextColumn get name => text()();
+  TextColumn get categoryId => text().nullable()();
   BoolColumn get active => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
@@ -213,9 +214,20 @@ class Routines extends Table {
   TextColumn get description => text().nullable()();
   TextColumn get stepsJson => text().withDefault(const Constant('[]'))();
   IntColumn get timeOfDayMinutes => integer().nullable()();
+  IntColumn get endTimeMinutes => integer().nullable()();
   TextColumn get daysOfWeekJson => text().nullable()();
+  TextColumn get categoryId => text().nullable()();
   BoolColumn get active => boolean().withDefault(const Constant(true))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+class RoutineCompletions extends Table {
+  TextColumn get routineId => text()();
+  DateTimeColumn get date => dateTime()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {routineId, date};
 }
 
 /// Standalone calendar events (incl. external calendars later).

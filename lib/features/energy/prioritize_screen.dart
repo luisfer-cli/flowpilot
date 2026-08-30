@@ -12,6 +12,7 @@ class PrioritizeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return const ModuleTabHost(
       title: 'Priorizar',
+      showTitle: false,
       tabs: [
         (label: 'Matriz', icon: Icons.grid_view, body: EisenhowerView()),
         (label: 'Contexto', icon: Icons.place, body: ContextView()),

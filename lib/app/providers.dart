@@ -13,8 +13,9 @@ import '../data/repositories/reference_repository.dart';
 import '../data/repositories/task_repository.dart';
 import '../data/repositories/time_block_repository.dart';
 import '../data/repositories/schedule_repository.dart';
-import '../data/repositories/activity_category_repository.dart';
+import '../data/repositories/category_repository.dart';
 import '../data/repositories/time_entry_repository.dart';
+import '../data/repositories/reports_repository.dart';
 
 /// In-memory database provider. Overridden in tests with a memory database.
 final databaseProvider = Provider<FlowPilotDatabase>((ref) {
@@ -28,7 +29,7 @@ final seedProvider = FutureProvider<void>((ref) async {
   final db = ref.watch(databaseProvider);
   await db.customSelect('SELECT 1').getSingle();
   await ReferenceRepository(db).seedIfNeeded();
-  await ActivityCategoryRepository(db).seedIfNeeded();
+  await CategoryRepository(db).seedIfNeeded();
   await AutomationRepository(db).seedIfNeeded();
 });
 
@@ -52,12 +53,16 @@ final scheduleRepositoryProvider = Provider<ScheduleRepository>(
   (ref) => ScheduleRepository(ref.watch(databaseProvider)),
 );
 
-final activityCategoryRepositoryProvider = Provider<ActivityCategoryRepository>(
-  (ref) => ActivityCategoryRepository(ref.watch(databaseProvider)),
+final categoryRepositoryProvider = Provider<CategoryRepository>(
+  (ref) => CategoryRepository(ref.watch(databaseProvider)),
 );
 
-final activityCategoriesProvider = StreamProvider<List<ActivityCategory>>(
-  (ref) => ref.watch(activityCategoryRepositoryProvider).watchAll(),
+final globalCategoriesProvider = StreamProvider<List<Category>>(
+  (ref) => ref.watch(categoryRepositoryProvider).watchAll(),
+);
+
+final reportsRepositoryProvider = Provider<ReportsRepository>(
+  (ref) => ReportsRepository(ref.watch(databaseProvider)),
 );
 
 final timeEntryRepositoryProvider = Provider<TimeEntryRepository>(

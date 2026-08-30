@@ -3314,7 +3314,7 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: false,
-    defaultValue: const Constant('Inbox'),
+    defaultValue: const Constant('Pendiente'),
   );
   static const VerificationMeta _priorityMeta = const VerificationMeta(
     'priority',
@@ -5846,6 +5846,17 @@ class $ScheduleTemplatesTable extends ScheduleTemplates
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _categoryIdMeta = const VerificationMeta(
+    'categoryId',
+  );
+  @override
+  late final GeneratedColumn<String> categoryId = GeneratedColumn<String>(
+    'category_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _activeMeta = const VerificationMeta('active');
   @override
   late final GeneratedColumn<bool> active = GeneratedColumn<bool>(
@@ -5872,7 +5883,13 @@ class $ScheduleTemplatesTable extends ScheduleTemplates
     defaultValue: currentDateAndTime,
   );
   @override
-  List<GeneratedColumn> get $columns => [id, name, active, createdAt];
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    categoryId,
+    active,
+    createdAt,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -5897,6 +5914,12 @@ class $ScheduleTemplatesTable extends ScheduleTemplates
       );
     } else if (isInserting) {
       context.missing(_nameMeta);
+    }
+    if (data.containsKey('category_id')) {
+      context.handle(
+        _categoryIdMeta,
+        categoryId.isAcceptableOrUnknown(data['category_id']!, _categoryIdMeta),
+      );
     }
     if (data.containsKey('active')) {
       context.handle(
@@ -5927,6 +5950,10 @@ class $ScheduleTemplatesTable extends ScheduleTemplates
         DriftSqlType.string,
         data['${effectivePrefix}name'],
       )!,
+      categoryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}category_id'],
+      ),
       active: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}active'],
@@ -5948,11 +5975,13 @@ class ScheduleTemplate extends DataClass
     implements Insertable<ScheduleTemplate> {
   final String id;
   final String name;
+  final String? categoryId;
   final bool active;
   final DateTime createdAt;
   const ScheduleTemplate({
     required this.id,
     required this.name,
+    this.categoryId,
     required this.active,
     required this.createdAt,
   });
@@ -5961,6 +5990,9 @@ class ScheduleTemplate extends DataClass
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
     map['name'] = Variable<String>(name);
+    if (!nullToAbsent || categoryId != null) {
+      map['category_id'] = Variable<String>(categoryId);
+    }
     map['active'] = Variable<bool>(active);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
@@ -5970,6 +6002,9 @@ class ScheduleTemplate extends DataClass
     return ScheduleTemplatesCompanion(
       id: Value(id),
       name: Value(name),
+      categoryId: categoryId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(categoryId),
       active: Value(active),
       createdAt: Value(createdAt),
     );
@@ -5983,6 +6018,7 @@ class ScheduleTemplate extends DataClass
     return ScheduleTemplate(
       id: serializer.fromJson<String>(json['id']),
       name: serializer.fromJson<String>(json['name']),
+      categoryId: serializer.fromJson<String?>(json['categoryId']),
       active: serializer.fromJson<bool>(json['active']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
@@ -5993,6 +6029,7 @@ class ScheduleTemplate extends DataClass
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'name': serializer.toJson<String>(name),
+      'categoryId': serializer.toJson<String?>(categoryId),
       'active': serializer.toJson<bool>(active),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
@@ -6001,11 +6038,13 @@ class ScheduleTemplate extends DataClass
   ScheduleTemplate copyWith({
     String? id,
     String? name,
+    Value<String?> categoryId = const Value.absent(),
     bool? active,
     DateTime? createdAt,
   }) => ScheduleTemplate(
     id: id ?? this.id,
     name: name ?? this.name,
+    categoryId: categoryId.present ? categoryId.value : this.categoryId,
     active: active ?? this.active,
     createdAt: createdAt ?? this.createdAt,
   );
@@ -6013,6 +6052,9 @@ class ScheduleTemplate extends DataClass
     return ScheduleTemplate(
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
+      categoryId: data.categoryId.present
+          ? data.categoryId.value
+          : this.categoryId,
       active: data.active.present ? data.active.value : this.active,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -6023,6 +6065,7 @@ class ScheduleTemplate extends DataClass
     return (StringBuffer('ScheduleTemplate(')
           ..write('id: $id, ')
           ..write('name: $name, ')
+          ..write('categoryId: $categoryId, ')
           ..write('active: $active, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -6030,13 +6073,14 @@ class ScheduleTemplate extends DataClass
   }
 
   @override
-  int get hashCode => Object.hash(id, name, active, createdAt);
+  int get hashCode => Object.hash(id, name, categoryId, active, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is ScheduleTemplate &&
           other.id == this.id &&
           other.name == this.name &&
+          other.categoryId == this.categoryId &&
           other.active == this.active &&
           other.createdAt == this.createdAt);
 }
@@ -6044,12 +6088,14 @@ class ScheduleTemplate extends DataClass
 class ScheduleTemplatesCompanion extends UpdateCompanion<ScheduleTemplate> {
   final Value<String> id;
   final Value<String> name;
+  final Value<String?> categoryId;
   final Value<bool> active;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
   const ScheduleTemplatesCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
+    this.categoryId = const Value.absent(),
     this.active = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -6057,6 +6103,7 @@ class ScheduleTemplatesCompanion extends UpdateCompanion<ScheduleTemplate> {
   ScheduleTemplatesCompanion.insert({
     required String id,
     required String name,
+    this.categoryId = const Value.absent(),
     this.active = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -6065,6 +6112,7 @@ class ScheduleTemplatesCompanion extends UpdateCompanion<ScheduleTemplate> {
   static Insertable<ScheduleTemplate> custom({
     Expression<String>? id,
     Expression<String>? name,
+    Expression<String>? categoryId,
     Expression<bool>? active,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
@@ -6072,6 +6120,7 @@ class ScheduleTemplatesCompanion extends UpdateCompanion<ScheduleTemplate> {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
+      if (categoryId != null) 'category_id': categoryId,
       if (active != null) 'active': active,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
@@ -6081,6 +6130,7 @@ class ScheduleTemplatesCompanion extends UpdateCompanion<ScheduleTemplate> {
   ScheduleTemplatesCompanion copyWith({
     Value<String>? id,
     Value<String>? name,
+    Value<String?>? categoryId,
     Value<bool>? active,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
@@ -6088,6 +6138,7 @@ class ScheduleTemplatesCompanion extends UpdateCompanion<ScheduleTemplate> {
     return ScheduleTemplatesCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
+      categoryId: categoryId ?? this.categoryId,
       active: active ?? this.active,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
@@ -6102,6 +6153,9 @@ class ScheduleTemplatesCompanion extends UpdateCompanion<ScheduleTemplate> {
     }
     if (name.present) {
       map['name'] = Variable<String>(name.value);
+    }
+    if (categoryId.present) {
+      map['category_id'] = Variable<String>(categoryId.value);
     }
     if (active.present) {
       map['active'] = Variable<bool>(active.value);
@@ -6120,6 +6174,7 @@ class ScheduleTemplatesCompanion extends UpdateCompanion<ScheduleTemplate> {
     return (StringBuffer('ScheduleTemplatesCompanion(')
           ..write('id: $id, ')
           ..write('name: $name, ')
+          ..write('categoryId: $categoryId, ')
           ..write('active: $active, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
@@ -8940,12 +8995,34 @@ class $RoutinesTable extends Routines with TableInfo<$RoutinesTable, Routine> {
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _endTimeMinutesMeta = const VerificationMeta(
+    'endTimeMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> endTimeMinutes = GeneratedColumn<int>(
+    'end_time_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _daysOfWeekJsonMeta = const VerificationMeta(
     'daysOfWeekJson',
   );
   @override
   late final GeneratedColumn<String> daysOfWeekJson = GeneratedColumn<String>(
     'days_of_week_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _categoryIdMeta = const VerificationMeta(
+    'categoryId',
+  );
+  @override
+  late final GeneratedColumn<String> categoryId = GeneratedColumn<String>(
+    'category_id',
     aliasedName,
     true,
     type: DriftSqlType.string,
@@ -8983,7 +9060,9 @@ class $RoutinesTable extends Routines with TableInfo<$RoutinesTable, Routine> {
     description,
     stepsJson,
     timeOfDayMinutes,
+    endTimeMinutes,
     daysOfWeekJson,
+    categoryId,
     active,
     createdAt,
   ];
@@ -9036,6 +9115,15 @@ class $RoutinesTable extends Routines with TableInfo<$RoutinesTable, Routine> {
         ),
       );
     }
+    if (data.containsKey('end_time_minutes')) {
+      context.handle(
+        _endTimeMinutesMeta,
+        endTimeMinutes.isAcceptableOrUnknown(
+          data['end_time_minutes']!,
+          _endTimeMinutesMeta,
+        ),
+      );
+    }
     if (data.containsKey('days_of_week_json')) {
       context.handle(
         _daysOfWeekJsonMeta,
@@ -9043,6 +9131,12 @@ class $RoutinesTable extends Routines with TableInfo<$RoutinesTable, Routine> {
           data['days_of_week_json']!,
           _daysOfWeekJsonMeta,
         ),
+      );
+    }
+    if (data.containsKey('category_id')) {
+      context.handle(
+        _categoryIdMeta,
+        categoryId.isAcceptableOrUnknown(data['category_id']!, _categoryIdMeta),
       );
     }
     if (data.containsKey('active')) {
@@ -9086,9 +9180,17 @@ class $RoutinesTable extends Routines with TableInfo<$RoutinesTable, Routine> {
         DriftSqlType.int,
         data['${effectivePrefix}time_of_day_minutes'],
       ),
+      endTimeMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}end_time_minutes'],
+      ),
       daysOfWeekJson: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}days_of_week_json'],
+      ),
+      categoryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}category_id'],
       ),
       active: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
@@ -9113,7 +9215,9 @@ class Routine extends DataClass implements Insertable<Routine> {
   final String? description;
   final String stepsJson;
   final int? timeOfDayMinutes;
+  final int? endTimeMinutes;
   final String? daysOfWeekJson;
+  final String? categoryId;
   final bool active;
   final DateTime createdAt;
   const Routine({
@@ -9122,7 +9226,9 @@ class Routine extends DataClass implements Insertable<Routine> {
     this.description,
     required this.stepsJson,
     this.timeOfDayMinutes,
+    this.endTimeMinutes,
     this.daysOfWeekJson,
+    this.categoryId,
     required this.active,
     required this.createdAt,
   });
@@ -9138,8 +9244,14 @@ class Routine extends DataClass implements Insertable<Routine> {
     if (!nullToAbsent || timeOfDayMinutes != null) {
       map['time_of_day_minutes'] = Variable<int>(timeOfDayMinutes);
     }
+    if (!nullToAbsent || endTimeMinutes != null) {
+      map['end_time_minutes'] = Variable<int>(endTimeMinutes);
+    }
     if (!nullToAbsent || daysOfWeekJson != null) {
       map['days_of_week_json'] = Variable<String>(daysOfWeekJson);
+    }
+    if (!nullToAbsent || categoryId != null) {
+      map['category_id'] = Variable<String>(categoryId);
     }
     map['active'] = Variable<bool>(active);
     map['created_at'] = Variable<DateTime>(createdAt);
@@ -9157,9 +9269,15 @@ class Routine extends DataClass implements Insertable<Routine> {
       timeOfDayMinutes: timeOfDayMinutes == null && nullToAbsent
           ? const Value.absent()
           : Value(timeOfDayMinutes),
+      endTimeMinutes: endTimeMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(endTimeMinutes),
       daysOfWeekJson: daysOfWeekJson == null && nullToAbsent
           ? const Value.absent()
           : Value(daysOfWeekJson),
+      categoryId: categoryId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(categoryId),
       active: Value(active),
       createdAt: Value(createdAt),
     );
@@ -9176,7 +9294,9 @@ class Routine extends DataClass implements Insertable<Routine> {
       description: serializer.fromJson<String?>(json['description']),
       stepsJson: serializer.fromJson<String>(json['stepsJson']),
       timeOfDayMinutes: serializer.fromJson<int?>(json['timeOfDayMinutes']),
+      endTimeMinutes: serializer.fromJson<int?>(json['endTimeMinutes']),
       daysOfWeekJson: serializer.fromJson<String?>(json['daysOfWeekJson']),
+      categoryId: serializer.fromJson<String?>(json['categoryId']),
       active: serializer.fromJson<bool>(json['active']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
@@ -9190,7 +9310,9 @@ class Routine extends DataClass implements Insertable<Routine> {
       'description': serializer.toJson<String?>(description),
       'stepsJson': serializer.toJson<String>(stepsJson),
       'timeOfDayMinutes': serializer.toJson<int?>(timeOfDayMinutes),
+      'endTimeMinutes': serializer.toJson<int?>(endTimeMinutes),
       'daysOfWeekJson': serializer.toJson<String?>(daysOfWeekJson),
+      'categoryId': serializer.toJson<String?>(categoryId),
       'active': serializer.toJson<bool>(active),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
@@ -9202,7 +9324,9 @@ class Routine extends DataClass implements Insertable<Routine> {
     Value<String?> description = const Value.absent(),
     String? stepsJson,
     Value<int?> timeOfDayMinutes = const Value.absent(),
+    Value<int?> endTimeMinutes = const Value.absent(),
     Value<String?> daysOfWeekJson = const Value.absent(),
+    Value<String?> categoryId = const Value.absent(),
     bool? active,
     DateTime? createdAt,
   }) => Routine(
@@ -9213,9 +9337,13 @@ class Routine extends DataClass implements Insertable<Routine> {
     timeOfDayMinutes: timeOfDayMinutes.present
         ? timeOfDayMinutes.value
         : this.timeOfDayMinutes,
+    endTimeMinutes: endTimeMinutes.present
+        ? endTimeMinutes.value
+        : this.endTimeMinutes,
     daysOfWeekJson: daysOfWeekJson.present
         ? daysOfWeekJson.value
         : this.daysOfWeekJson,
+    categoryId: categoryId.present ? categoryId.value : this.categoryId,
     active: active ?? this.active,
     createdAt: createdAt ?? this.createdAt,
   );
@@ -9230,9 +9358,15 @@ class Routine extends DataClass implements Insertable<Routine> {
       timeOfDayMinutes: data.timeOfDayMinutes.present
           ? data.timeOfDayMinutes.value
           : this.timeOfDayMinutes,
+      endTimeMinutes: data.endTimeMinutes.present
+          ? data.endTimeMinutes.value
+          : this.endTimeMinutes,
       daysOfWeekJson: data.daysOfWeekJson.present
           ? data.daysOfWeekJson.value
           : this.daysOfWeekJson,
+      categoryId: data.categoryId.present
+          ? data.categoryId.value
+          : this.categoryId,
       active: data.active.present ? data.active.value : this.active,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -9246,7 +9380,9 @@ class Routine extends DataClass implements Insertable<Routine> {
           ..write('description: $description, ')
           ..write('stepsJson: $stepsJson, ')
           ..write('timeOfDayMinutes: $timeOfDayMinutes, ')
+          ..write('endTimeMinutes: $endTimeMinutes, ')
           ..write('daysOfWeekJson: $daysOfWeekJson, ')
+          ..write('categoryId: $categoryId, ')
           ..write('active: $active, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -9260,7 +9396,9 @@ class Routine extends DataClass implements Insertable<Routine> {
     description,
     stepsJson,
     timeOfDayMinutes,
+    endTimeMinutes,
     daysOfWeekJson,
+    categoryId,
     active,
     createdAt,
   );
@@ -9273,7 +9411,9 @@ class Routine extends DataClass implements Insertable<Routine> {
           other.description == this.description &&
           other.stepsJson == this.stepsJson &&
           other.timeOfDayMinutes == this.timeOfDayMinutes &&
+          other.endTimeMinutes == this.endTimeMinutes &&
           other.daysOfWeekJson == this.daysOfWeekJson &&
+          other.categoryId == this.categoryId &&
           other.active == this.active &&
           other.createdAt == this.createdAt);
 }
@@ -9284,7 +9424,9 @@ class RoutinesCompanion extends UpdateCompanion<Routine> {
   final Value<String?> description;
   final Value<String> stepsJson;
   final Value<int?> timeOfDayMinutes;
+  final Value<int?> endTimeMinutes;
   final Value<String?> daysOfWeekJson;
+  final Value<String?> categoryId;
   final Value<bool> active;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
@@ -9294,7 +9436,9 @@ class RoutinesCompanion extends UpdateCompanion<Routine> {
     this.description = const Value.absent(),
     this.stepsJson = const Value.absent(),
     this.timeOfDayMinutes = const Value.absent(),
+    this.endTimeMinutes = const Value.absent(),
     this.daysOfWeekJson = const Value.absent(),
+    this.categoryId = const Value.absent(),
     this.active = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -9305,7 +9449,9 @@ class RoutinesCompanion extends UpdateCompanion<Routine> {
     this.description = const Value.absent(),
     this.stepsJson = const Value.absent(),
     this.timeOfDayMinutes = const Value.absent(),
+    this.endTimeMinutes = const Value.absent(),
     this.daysOfWeekJson = const Value.absent(),
+    this.categoryId = const Value.absent(),
     this.active = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -9317,7 +9463,9 @@ class RoutinesCompanion extends UpdateCompanion<Routine> {
     Expression<String>? description,
     Expression<String>? stepsJson,
     Expression<int>? timeOfDayMinutes,
+    Expression<int>? endTimeMinutes,
     Expression<String>? daysOfWeekJson,
+    Expression<String>? categoryId,
     Expression<bool>? active,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
@@ -9328,7 +9476,9 @@ class RoutinesCompanion extends UpdateCompanion<Routine> {
       if (description != null) 'description': description,
       if (stepsJson != null) 'steps_json': stepsJson,
       if (timeOfDayMinutes != null) 'time_of_day_minutes': timeOfDayMinutes,
+      if (endTimeMinutes != null) 'end_time_minutes': endTimeMinutes,
       if (daysOfWeekJson != null) 'days_of_week_json': daysOfWeekJson,
+      if (categoryId != null) 'category_id': categoryId,
       if (active != null) 'active': active,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
@@ -9341,7 +9491,9 @@ class RoutinesCompanion extends UpdateCompanion<Routine> {
     Value<String?>? description,
     Value<String>? stepsJson,
     Value<int?>? timeOfDayMinutes,
+    Value<int?>? endTimeMinutes,
     Value<String?>? daysOfWeekJson,
+    Value<String?>? categoryId,
     Value<bool>? active,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
@@ -9352,7 +9504,9 @@ class RoutinesCompanion extends UpdateCompanion<Routine> {
       description: description ?? this.description,
       stepsJson: stepsJson ?? this.stepsJson,
       timeOfDayMinutes: timeOfDayMinutes ?? this.timeOfDayMinutes,
+      endTimeMinutes: endTimeMinutes ?? this.endTimeMinutes,
       daysOfWeekJson: daysOfWeekJson ?? this.daysOfWeekJson,
+      categoryId: categoryId ?? this.categoryId,
       active: active ?? this.active,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
@@ -9377,8 +9531,14 @@ class RoutinesCompanion extends UpdateCompanion<Routine> {
     if (timeOfDayMinutes.present) {
       map['time_of_day_minutes'] = Variable<int>(timeOfDayMinutes.value);
     }
+    if (endTimeMinutes.present) {
+      map['end_time_minutes'] = Variable<int>(endTimeMinutes.value);
+    }
     if (daysOfWeekJson.present) {
       map['days_of_week_json'] = Variable<String>(daysOfWeekJson.value);
+    }
+    if (categoryId.present) {
+      map['category_id'] = Variable<String>(categoryId.value);
     }
     if (active.present) {
       map['active'] = Variable<bool>(active.value);
@@ -9400,8 +9560,276 @@ class RoutinesCompanion extends UpdateCompanion<Routine> {
           ..write('description: $description, ')
           ..write('stepsJson: $stepsJson, ')
           ..write('timeOfDayMinutes: $timeOfDayMinutes, ')
+          ..write('endTimeMinutes: $endTimeMinutes, ')
           ..write('daysOfWeekJson: $daysOfWeekJson, ')
+          ..write('categoryId: $categoryId, ')
           ..write('active: $active, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $RoutineCompletionsTable extends RoutineCompletions
+    with TableInfo<$RoutineCompletionsTable, RoutineCompletion> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RoutineCompletionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _routineIdMeta = const VerificationMeta(
+    'routineId',
+  );
+  @override
+  late final GeneratedColumn<String> routineId = GeneratedColumn<String>(
+    'routine_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dateMeta = const VerificationMeta('date');
+  @override
+  late final GeneratedColumn<DateTime> date = GeneratedColumn<DateTime>(
+    'date',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [routineId, date, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'routine_completions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RoutineCompletion> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('routine_id')) {
+      context.handle(
+        _routineIdMeta,
+        routineId.isAcceptableOrUnknown(data['routine_id']!, _routineIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_routineIdMeta);
+    }
+    if (data.containsKey('date')) {
+      context.handle(
+        _dateMeta,
+        date.isAcceptableOrUnknown(data['date']!, _dateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dateMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {routineId, date};
+  @override
+  RoutineCompletion map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RoutineCompletion(
+      routineId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}routine_id'],
+      )!,
+      date: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}date'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $RoutineCompletionsTable createAlias(String alias) {
+    return $RoutineCompletionsTable(attachedDatabase, alias);
+  }
+}
+
+class RoutineCompletion extends DataClass
+    implements Insertable<RoutineCompletion> {
+  final String routineId;
+  final DateTime date;
+  final DateTime createdAt;
+  const RoutineCompletion({
+    required this.routineId,
+    required this.date,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['routine_id'] = Variable<String>(routineId);
+    map['date'] = Variable<DateTime>(date);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  RoutineCompletionsCompanion toCompanion(bool nullToAbsent) {
+    return RoutineCompletionsCompanion(
+      routineId: Value(routineId),
+      date: Value(date),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory RoutineCompletion.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RoutineCompletion(
+      routineId: serializer.fromJson<String>(json['routineId']),
+      date: serializer.fromJson<DateTime>(json['date']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'routineId': serializer.toJson<String>(routineId),
+      'date': serializer.toJson<DateTime>(date),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  RoutineCompletion copyWith({
+    String? routineId,
+    DateTime? date,
+    DateTime? createdAt,
+  }) => RoutineCompletion(
+    routineId: routineId ?? this.routineId,
+    date: date ?? this.date,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  RoutineCompletion copyWithCompanion(RoutineCompletionsCompanion data) {
+    return RoutineCompletion(
+      routineId: data.routineId.present ? data.routineId.value : this.routineId,
+      date: data.date.present ? data.date.value : this.date,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RoutineCompletion(')
+          ..write('routineId: $routineId, ')
+          ..write('date: $date, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(routineId, date, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RoutineCompletion &&
+          other.routineId == this.routineId &&
+          other.date == this.date &&
+          other.createdAt == this.createdAt);
+}
+
+class RoutineCompletionsCompanion extends UpdateCompanion<RoutineCompletion> {
+  final Value<String> routineId;
+  final Value<DateTime> date;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const RoutineCompletionsCompanion({
+    this.routineId = const Value.absent(),
+    this.date = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RoutineCompletionsCompanion.insert({
+    required String routineId,
+    required DateTime date,
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : routineId = Value(routineId),
+       date = Value(date);
+  static Insertable<RoutineCompletion> custom({
+    Expression<String>? routineId,
+    Expression<DateTime>? date,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (routineId != null) 'routine_id': routineId,
+      if (date != null) 'date': date,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RoutineCompletionsCompanion copyWith({
+    Value<String>? routineId,
+    Value<DateTime>? date,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return RoutineCompletionsCompanion(
+      routineId: routineId ?? this.routineId,
+      date: date ?? this.date,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (routineId.present) {
+      map['routine_id'] = Variable<String>(routineId.value);
+    }
+    if (date.present) {
+      map['date'] = Variable<DateTime>(date.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RoutineCompletionsCompanion(')
+          ..write('routineId: $routineId, ')
+          ..write('date: $date, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -12955,6 +13383,8 @@ abstract class _$FlowPilotDatabase extends GeneratedDatabase {
     this,
   );
   late final $RoutinesTable routines = $RoutinesTable(this);
+  late final $RoutineCompletionsTable routineCompletions =
+      $RoutineCompletionsTable(this);
   late final $CalendarEventsTable calendarEvents = $CalendarEventsTable(this);
   late final $RemindersTable reminders = $RemindersTable(this);
   late final $NotesTable notes = $NotesTable(this);
@@ -12990,6 +13420,7 @@ abstract class _$FlowPilotDatabase extends GeneratedDatabase {
     habits,
     habitCompletions,
     routines,
+    routineCompletions,
     calendarEvents,
     reminders,
     notes,
@@ -15986,6 +16417,7 @@ typedef $$ScheduleTemplatesTableCreateCompanionBuilder =
     ScheduleTemplatesCompanion Function({
       required String id,
       required String name,
+      Value<String?> categoryId,
       Value<bool> active,
       Value<DateTime> createdAt,
       Value<int> rowid,
@@ -15994,6 +16426,7 @@ typedef $$ScheduleTemplatesTableUpdateCompanionBuilder =
     ScheduleTemplatesCompanion Function({
       Value<String> id,
       Value<String> name,
+      Value<String?> categoryId,
       Value<bool> active,
       Value<DateTime> createdAt,
       Value<int> rowid,
@@ -16015,6 +16448,11 @@ class $$ScheduleTemplatesTableFilterComposer
 
   ColumnFilters<String> get name => $composableBuilder(
     column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get categoryId => $composableBuilder(
+    column: $table.categoryId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -16048,6 +16486,11 @@ class $$ScheduleTemplatesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get categoryId => $composableBuilder(
+    column: $table.categoryId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get active => $composableBuilder(
     column: $table.active,
     builder: (column) => ColumnOrderings(column),
@@ -16073,6 +16516,11 @@ class $$ScheduleTemplatesTableAnnotationComposer
 
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get categoryId => $composableBuilder(
+    column: $table.categoryId,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<bool> get active =>
       $composableBuilder(column: $table.active, builder: (column) => column);
@@ -16123,12 +16571,14 @@ class $$ScheduleTemplatesTableTableManager
               ({
                 Value<String> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
+                Value<String?> categoryId = const Value.absent(),
                 Value<bool> active = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ScheduleTemplatesCompanion(
                 id: id,
                 name: name,
+                categoryId: categoryId,
                 active: active,
                 createdAt: createdAt,
                 rowid: rowid,
@@ -16137,12 +16587,14 @@ class $$ScheduleTemplatesTableTableManager
               ({
                 required String id,
                 required String name,
+                Value<String?> categoryId = const Value.absent(),
                 Value<bool> active = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ScheduleTemplatesCompanion.insert(
                 id: id,
                 name: name,
+                categoryId: categoryId,
                 active: active,
                 createdAt: createdAt,
                 rowid: rowid,
@@ -17672,7 +18124,9 @@ typedef $$RoutinesTableCreateCompanionBuilder = RoutinesCompanion Function({
   Value<String?> description,
   Value<String> stepsJson,
   Value<int?> timeOfDayMinutes,
+  Value<int?> endTimeMinutes,
   Value<String?> daysOfWeekJson,
+  Value<String?> categoryId,
   Value<bool> active,
   Value<DateTime> createdAt,
   Value<int> rowid,
@@ -17683,7 +18137,9 @@ typedef $$RoutinesTableUpdateCompanionBuilder = RoutinesCompanion Function({
   Value<String?> description,
   Value<String> stepsJson,
   Value<int?> timeOfDayMinutes,
+  Value<int?> endTimeMinutes,
   Value<String?> daysOfWeekJson,
+  Value<String?> categoryId,
   Value<bool> active,
   Value<DateTime> createdAt,
   Value<int> rowid,
@@ -17723,8 +18179,18 @@ class $$RoutinesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<int> get endTimeMinutes => $composableBuilder(
+    column: $table.endTimeMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get daysOfWeekJson => $composableBuilder(
     column: $table.daysOfWeekJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get categoryId => $composableBuilder(
+    column: $table.categoryId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -17773,8 +18239,18 @@ class $$RoutinesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get endTimeMinutes => $composableBuilder(
+    column: $table.endTimeMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get daysOfWeekJson => $composableBuilder(
     column: $table.daysOfWeekJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get categoryId => $composableBuilder(
+    column: $table.categoryId,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -17817,8 +18293,18 @@ class $$RoutinesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get endTimeMinutes => $composableBuilder(
+    column: $table.endTimeMinutes,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get daysOfWeekJson => $composableBuilder(
     column: $table.daysOfWeekJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get categoryId => $composableBuilder(
+    column: $table.categoryId,
     builder: (column) => column,
   );
 
@@ -17865,7 +18351,9 @@ class $$RoutinesTableTableManager
                 Value<String?> description = const Value.absent(),
                 Value<String> stepsJson = const Value.absent(),
                 Value<int?> timeOfDayMinutes = const Value.absent(),
+                Value<int?> endTimeMinutes = const Value.absent(),
                 Value<String?> daysOfWeekJson = const Value.absent(),
+                Value<String?> categoryId = const Value.absent(),
                 Value<bool> active = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -17875,7 +18363,9 @@ class $$RoutinesTableTableManager
                 description: description,
                 stepsJson: stepsJson,
                 timeOfDayMinutes: timeOfDayMinutes,
+                endTimeMinutes: endTimeMinutes,
                 daysOfWeekJson: daysOfWeekJson,
+                categoryId: categoryId,
                 active: active,
                 createdAt: createdAt,
                 rowid: rowid,
@@ -17887,7 +18377,9 @@ class $$RoutinesTableTableManager
                 Value<String?> description = const Value.absent(),
                 Value<String> stepsJson = const Value.absent(),
                 Value<int?> timeOfDayMinutes = const Value.absent(),
+                Value<int?> endTimeMinutes = const Value.absent(),
                 Value<String?> daysOfWeekJson = const Value.absent(),
+                Value<String?> categoryId = const Value.absent(),
                 Value<bool> active = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -17897,7 +18389,9 @@ class $$RoutinesTableTableManager
                 description: description,
                 stepsJson: stepsJson,
                 timeOfDayMinutes: timeOfDayMinutes,
+                endTimeMinutes: endTimeMinutes,
                 daysOfWeekJson: daysOfWeekJson,
+                categoryId: categoryId,
                 active: active,
                 createdAt: createdAt,
                 rowid: rowid,
@@ -17922,6 +18416,181 @@ typedef $$RoutinesTableProcessedTableManager =
       $$RoutinesTableUpdateCompanionBuilder,
       (Routine, BaseReferences<_$FlowPilotDatabase, $RoutinesTable, Routine>),
       Routine,
+      PrefetchHooks Function()
+    >;
+typedef $$RoutineCompletionsTableCreateCompanionBuilder =
+    RoutineCompletionsCompanion Function({
+      required String routineId,
+      required DateTime date,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+typedef $$RoutineCompletionsTableUpdateCompanionBuilder =
+    RoutineCompletionsCompanion Function({
+      Value<String> routineId,
+      Value<DateTime> date,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$RoutineCompletionsTableFilterComposer
+    extends Composer<_$FlowPilotDatabase, $RoutineCompletionsTable> {
+  $$RoutineCompletionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get routineId => $composableBuilder(
+    column: $table.routineId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get date => $composableBuilder(
+    column: $table.date,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RoutineCompletionsTableOrderingComposer
+    extends Composer<_$FlowPilotDatabase, $RoutineCompletionsTable> {
+  $$RoutineCompletionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get routineId => $composableBuilder(
+    column: $table.routineId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get date => $composableBuilder(
+    column: $table.date,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RoutineCompletionsTableAnnotationComposer
+    extends Composer<_$FlowPilotDatabase, $RoutineCompletionsTable> {
+  $$RoutineCompletionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get routineId =>
+      $composableBuilder(column: $table.routineId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get date =>
+      $composableBuilder(column: $table.date, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$RoutineCompletionsTableTableManager
+    extends
+        RootTableManager<
+          _$FlowPilotDatabase,
+          $RoutineCompletionsTable,
+          RoutineCompletion,
+          $$RoutineCompletionsTableFilterComposer,
+          $$RoutineCompletionsTableOrderingComposer,
+          $$RoutineCompletionsTableAnnotationComposer,
+          $$RoutineCompletionsTableCreateCompanionBuilder,
+          $$RoutineCompletionsTableUpdateCompanionBuilder,
+          (
+            RoutineCompletion,
+            BaseReferences<
+              _$FlowPilotDatabase,
+              $RoutineCompletionsTable,
+              RoutineCompletion
+            >,
+          ),
+          RoutineCompletion,
+          PrefetchHooks Function()
+        > {
+  $$RoutineCompletionsTableTableManager(
+    _$FlowPilotDatabase db,
+    $RoutineCompletionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RoutineCompletionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RoutineCompletionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RoutineCompletionsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> routineId = const Value.absent(),
+                Value<DateTime> date = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RoutineCompletionsCompanion(
+                routineId: routineId,
+                date: date,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String routineId,
+                required DateTime date,
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RoutineCompletionsCompanion.insert(
+                routineId: routineId,
+                date: date,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RoutineCompletionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$FlowPilotDatabase,
+      $RoutineCompletionsTable,
+      RoutineCompletion,
+      $$RoutineCompletionsTableFilterComposer,
+      $$RoutineCompletionsTableOrderingComposer,
+      $$RoutineCompletionsTableAnnotationComposer,
+      $$RoutineCompletionsTableCreateCompanionBuilder,
+      $$RoutineCompletionsTableUpdateCompanionBuilder,
+      (
+        RoutineCompletion,
+        BaseReferences<
+          _$FlowPilotDatabase,
+          $RoutineCompletionsTable,
+          RoutineCompletion
+        >,
+      ),
+      RoutineCompletion,
       PrefetchHooks Function()
     >;
 typedef $$CalendarEventsTableCreateCompanionBuilder =
@@ -19846,6 +20515,8 @@ class $FlowPilotDatabaseManager {
       $$HabitCompletionsTableTableManager(_db, _db.habitCompletions);
   $$RoutinesTableTableManager get routines =>
       $$RoutinesTableTableManager(_db, _db.routines);
+  $$RoutineCompletionsTableTableManager get routineCompletions =>
+      $$RoutineCompletionsTableTableManager(_db, _db.routineCompletions);
   $$CalendarEventsTableTableManager get calendarEvents =>
       $$CalendarEventsTableTableManager(_db, _db.calendarEvents);
   $$RemindersTableTableManager get reminders =>

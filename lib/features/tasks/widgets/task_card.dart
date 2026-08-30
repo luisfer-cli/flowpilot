@@ -18,10 +18,14 @@ class TaskCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final done = task.status == kStatusDone;
-    final project = task.projectId == null
+    final done = task.status == kStatusCompleted;
+    final category = task.categoryId == null
         ? null
-        : ref.watch(projectByIdProvider(task.projectId!)).valueOrNull;
+        : ref
+              .watch(globalCategoriesProvider)
+              .valueOrNull
+              ?.where((item) => item.id == task.categoryId)
+              .firstOrNull;
 
     return Card(
       child: InkWell(
@@ -82,10 +86,10 @@ class TaskCard extends ConsumerWidget {
                       runSpacing: 4,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        if (project != null)
+                        if (category != null)
                           _LabelChip(
-                            text: project.name,
-                            color: Color(project.color),
+                            text: category.name,
+                            color: Color(category.color),
                           ),
                         if (task.dueDate != null) _DueChip(task: task),
                         if (task.estimatedMinutes != null)
@@ -180,7 +184,7 @@ class _DueChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final due = task.dueDate!;
     final now = DateTime.now();
-    final overdue = due.isBefore(now) && task.status != kStatusDone;
+    final overdue = due.isBefore(now) && task.status != kStatusCompleted;
     final color = overdue
         ? const Color(0xFFE05555)
         : Theme.of(context).colorScheme.primary;

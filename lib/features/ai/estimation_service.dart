@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
+import '../../core/constants.dart';
 
 /// Estimates how long a task will actually take based on historical
 /// estimation accuracy. The more history, the more accurate the prediction.
@@ -53,7 +54,7 @@ class EstimationService {
           (t) =>
               t.actualMinutes > 0 &&
               (t.estimatedMinutes ?? 0) > 0 &&
-              t.status == 'Done',
+              t.status == kStatusCompleted,
         )
         .toList();
   }

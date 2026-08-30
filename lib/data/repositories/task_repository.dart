@@ -72,7 +72,7 @@ class TaskRepository {
     return TasksCompanion(
       title: Value('${t.title} (copia)'),
       description: Value(t.description),
-      status: Value('Inbox'),
+      status: Value(kStatusPending),
       priority: Value(t.priority),
       contextId: Value(t.contextId),
       categoryId: Value(t.categoryId),
@@ -103,7 +103,7 @@ class TaskRepository {
     return (_db.select(_db.tasks)
           ..where(
             (t) =>
-                t.status.isNotIn([kStatusDone, kStatusCancelled]) &
+                t.status.isNotIn([kStatusCompleted]) &
                 t.isArchived.equals(false),
           )
           ..orderBy([
@@ -173,7 +173,7 @@ class TaskRepository {
   Future<void> complete(String id, {bool done = true}) async {
     await (_db.update(_db.tasks)..where((t) => t.id.equals(id))).write(
       TasksCompanion(
-        status: Value(done ? kStatusDone : 'Next'),
+        status: Value(done ? kStatusCompleted : kStatusPending),
         completedAt: Value(done ? DateTime.now() : null),
         updatedAt: Value(DateTime.now()),
       ),
@@ -181,10 +181,13 @@ class TaskRepository {
   }
 
   Future<void> setStatus(String id, String status) async {
+    if (!kDefaultStatuses.contains(status)) {
+      throw ArgumentError.value(status, 'status', 'Estado de tarea inválido');
+    }
     await (_db.update(_db.tasks)..where((t) => t.id.equals(id))).write(
       TasksCompanion(
         status: Value(status),
-        completedAt: Value(status == kStatusDone ? DateTime.now() : null),
+        completedAt: Value(status == kStatusCompleted ? DateTime.now() : null),
         updatedAt: Value(DateTime.now()),
       ),
     );
@@ -195,7 +198,11 @@ class TaskRepository {
         .customSelect(
           'SELECT COUNT(*) as c FROM tasks WHERE status = ? '
           'AND completed_at >= ? AND completed_at <= ?',
-          variables: [Variable(kStatusDone), Variable(start), Variable(end)],
+          variables: [
+            Variable(kStatusCompleted),
+            Variable(start),
+            Variable(end),
+          ],
           readsFrom: {_db.tasks},
         )
         .getSingle()
@@ -216,12 +223,8 @@ class TaskRepository {
     return _db
         .customSelect(
           'SELECT COUNT(*) as c FROM tasks '
-          'WHERE status NOT IN (?, ?) AND due_date < ? AND is_archived = 0',
-          variables: [
-            Variable(kStatusDone),
-            Variable(kStatusCancelled),
-            Variable(DateTime.now()),
-          ],
+          'WHERE status != ? AND due_date < ? AND is_archived = 0',
+          variables: [Variable(kStatusCompleted), Variable(DateTime.now())],
           readsFrom: {_db.tasks},
         )
         .getSingle()
@@ -232,7 +235,7 @@ class TaskRepository {
     final rows = await (_db.select(
       _db.tasks,
     )..where((t) => t.projectId.equals(projectId))).get();
-    final done = rows.where((t) => t.status == kStatusDone).length;
+    final done = rows.where((t) => t.status == kStatusCompleted).length;
     return (total: rows.length, done: done);
   }
 

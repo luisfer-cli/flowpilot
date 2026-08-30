@@ -1,17 +1,13 @@
-/// Default task statuses, in a logical pipeline order. Customizable in settings.
+/// The only task states exposed by the application.
 const List<String> kDefaultStatuses = [
-  'Inbox',
-  'Backlog',
-  'Next',
-  'In Progress',
-  'Blocked',
-  'Waiting',
-  'Done',
-  'Cancelled',
+  kStatusPending,
+  kStatusInProgress,
+  kStatusCompleted,
 ];
 
-const String kStatusDone = 'Done';
-const String kStatusCancelled = 'Cancelled';
+const String kStatusPending = 'Pendiente';
+const String kStatusInProgress = 'En curso';
+const String kStatusCompleted = 'Completada';
 
 /// Priority values (0 = none, 1 = low, 2 = medium, 3 = high, 4 = urgent).
 const int kPriorityNone = 0;

@@ -211,8 +211,7 @@ final delayedTasksProvider =
                 t.dueDate != null &&
                 !t.dueDate!.isBefore(range.start) &&
                 !t.dueDate!.isAfter(range.end) &&
-                t.status != kStatusDone &&
-                t.status != kStatusCancelled,
+                t.status != kStatusCompleted,
           )
           .length;
     });

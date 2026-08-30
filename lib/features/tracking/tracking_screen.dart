@@ -5,10 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
 import '../../core/utils/time_utils.dart';
-import '../../core/utils/id.dart';
 import '../../data/local/database.dart';
 import '../../shared/widgets.dart';
 import '../tasks/task_providers.dart';
+import '../categories/category_manager.dart';
 
 class TrackingView extends ConsumerStatefulWidget {
   const TrackingView({super.key});
@@ -148,7 +148,7 @@ class _TrackingViewState extends ConsumerState<TrackingView> {
           trailing: IconButton(
             icon: const Icon(Icons.category_outlined),
             tooltip: 'Gestionar categorías',
-            onPressed: _manageCategories,
+            onPressed: () => showCategoryManager(context, ref),
           ),
         ),
         const SizedBox(height: 8),
@@ -250,8 +250,8 @@ class _TrackingViewState extends ConsumerState<TrackingView> {
           final tasks =
               ref.watch(activeTasksProvider).valueOrNull ?? const <Task>[];
           final categories =
-              ref.watch(activityCategoriesProvider).valueOrNull ??
-              const <ActivityCategory>[];
+              ref.watch(globalCategoriesProvider).valueOrNull ??
+              const <Category>[];
 
           return AlertDialog(
             title: const Text('Añadir tiempo'),
@@ -340,70 +340,6 @@ class _TrackingViewState extends ConsumerState<TrackingView> {
       ),
     );
   }
-
-  Future<void> _manageCategories() async {
-    final controller = TextEditingController();
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Categorías de actividad'),
-        content: Consumer(
-          builder: (context, ref, _) {
-            final categories =
-                ref.watch(activityCategoriesProvider).valueOrNull ??
-                const <ActivityCategory>[];
-            return SizedBox(
-              width: 360,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  for (final category in categories)
-                    ListTile(
-                      title: Text(category.name),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete_outline),
-                        onPressed: () => ref
-                            .read(activityCategoryRepositoryProvider)
-                            .delete(category.id),
-                      ),
-                    ),
-                  TextField(
-                    controller: controller,
-                    decoration: const InputDecoration(
-                      labelText: 'Nueva categoría',
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cerrar'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              if (controller.text.trim().isNotEmpty) {
-                await ref
-                    .read(activityCategoryRepositoryProvider)
-                    .insert(
-                      ActivityCategoriesCompanion.insert(
-                        id: generateId(),
-                        name: controller.text.trim(),
-                      ),
-                    );
-              }
-              if (dialogContext.mounted) Navigator.pop(dialogContext);
-            },
-            child: const Text('Agregar'),
-          ),
-        ],
-      ),
-    );
-    controller.dispose();
-  }
 }
 
 class _StartTrackingSheet extends ConsumerStatefulWidget {
@@ -421,8 +357,7 @@ class _StartTrackingSheetState extends ConsumerState<_StartTrackingSheet> {
   @override
   Widget build(BuildContext context) {
     final categories =
-        ref.watch(activityCategoriesProvider).valueOrNull ??
-        const <ActivityCategory>[];
+        ref.watch(globalCategoriesProvider).valueOrNull ?? const <Category>[];
     return ListView(
       shrinkWrap: true,
       children: [
@@ -470,7 +405,7 @@ class _EntryTile extends ConsumerWidget {
     final categoryName = entry.categoryId == null
         ? null
         : ref
-              .watch(activityCategoriesProvider)
+              .watch(globalCategoriesProvider)
               .valueOrNull
               ?.where((category) => category.id == entry.categoryId)
               .firstOrNull
